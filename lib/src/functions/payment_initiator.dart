@@ -1,0 +1,107 @@
+import 'dart:convert';
+import 'dart:developer';
+
+import 'package:http/http.dart' as http;
+
+import '../model/atom_constants.dart';
+import '../pages/atom_payment_web_page.dart';
+import '../router/atom_page_route.dart';
+import '../sdk/atom_s_d_k.dart';
+import 'a_e_s_helper.dart';
+import 'atom_pay_helper.dart';
+
+/// Initiates the payment process by encrypting request data and obtaining a token.
+///
+/// - [instance]: The AtomSDK instance containing payment options.
+Future<void> startPayment(AtomSDK instance) async {
+  final String encryptedString = await AESHelper.getAtomEncryption(
+    plainText: getRequestJsonData(jsonDecode(jsonEncode(instance.options))),
+    key: instance.options.requestEncryptionKey,
+  );
+
+  return await _getAtomTokenId(
+    authEncryptedString: encryptedString,
+    instance: instance,
+  );
+}
+
+/// Sends an authentication request to obtain an Atom token ID.
+///
+/// - [authEncryptedString]: The encrypted authentication request data.
+/// - [instance]: The AtomSDK instance used for the transaction.
+Future<void> _getAtomTokenId({
+  required String authEncryptedString,
+  required AtomSDK instance,
+}) async {
+  try {
+    final String authApiUrl = _getAuthApiUrl(instance.options.mode);
+
+    final request = http.Request('POST', Uri.parse(authApiUrl))
+      ..bodyFields = {
+        'encData': authEncryptedString,
+        'merchId': instance.options.login,
+      };
+
+    final http.StreamedResponse response = await request.send();
+    final String authApiResponse = await response.stream.bytesToString();
+
+    if (response.statusCode != 200) {
+      throw Exception(
+        'Request failed with status: ${response.statusCode}\nResponse: $authApiResponse',
+      );
+    }
+
+    log(name: 'Atom SDK', 'Payment Initialization Response\n$authApiResponse');
+
+    final List<String> responseParts = authApiResponse.trim().split('&');
+    if (responseParts.length < 2 || !responseParts[1].startsWith('encData=')) {
+      throw Exception('Invalid response format: $authApiResponse');
+    }
+
+    final String encryptedData = responseParts[1].split('=')[1];
+
+    final String decryptedResponse = await AESHelper.getAtomDecryption(
+      encryptedText: encryptedData,
+      key: instance.options.responseDecryptionKey,
+    );
+
+    final Map<String, dynamic> jsonResponse = jsonDecode(decryptedResponse);
+    final txnStatus = jsonResponse['responseDetails']?['txnStatusCode'];
+
+    if (txnStatus != 'OTS0000') {
+      throw Exception('Transaction failed: $txnStatus');
+    }
+
+    final String atomTokenId = jsonResponse['atomTokenId'].toString();
+    final String payDetails = jsonEncode({
+      'atomTokenId': atomTokenId,
+      'merchId': instance.options.login,
+      'emailId': instance.options.email,
+      'mobileNumber': instance.options.mobile,
+      'returnUrl': instance.options.returnUrl,
+    });
+
+    AtomSDK.atomNavigatorObserver.navigator?.pushReplacement(
+      AtomPageRoute(
+        builder:
+            (context) => AtomPaymentWebPage(
+              options: instance.options,
+              payDetails: payDetails,
+              instance: instance,
+            ),
+      ),
+    );
+  } catch (e) {
+    throw Exception('Failed to initialize payment:\n ${e.toString()}');
+  }
+}
+
+/// Returns the appropriate authentication API URL based on the payment mode.
+///
+/// - [mode]: The payment mode (UAT or Live).
+String _getAuthApiUrl(AtomPaymentMode mode) {
+  return switch (mode) {
+    AtomPaymentMode.uat => 'https://caller.atomtech.in/ots/aipay/auth',
+    AtomPaymentMode.live => 'https://payment1.atomtech.in/ots/aipay/auth',
+  };
+}
