@@ -144,6 +144,7 @@ When initializing a transaction, the **returnUrl** is optional. However, using a
 ### **Solution:**  
 If you choose to use a custom return URL, you will need to set up a **custom backend API** to manually check the transaction status. This ensures you can verify payments reliably.  
 
+# Contributions
 Contributions are welcome! Please fork the repository and submit a pull request. For bug reports or feature requests, please open an issue on the [GitHub repository.](https://github.com/gktirkha/ntt_atom_flutter)
 
 # License
