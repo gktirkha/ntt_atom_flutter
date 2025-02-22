@@ -2,6 +2,8 @@
 
 * Initial Release.
 
-
 ## 1.0.0
 - Readme Fix
+
+## 1.0.1
+- License Update

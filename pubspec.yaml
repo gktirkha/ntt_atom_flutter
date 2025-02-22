@@ -2,7 +2,7 @@ name: ntt_atom_flutter
 description: A Flutter SDK for integrating NTT Atom Pay, enabling seamless payment processing with secure and efficient transactions.
 repository: https://github.com/gktirkha/ntt_atom_flutter.git
 homepage: https://github.com/gktirkha/ntt_atom_flutter
-version: 1.0.0
+version: 1.0.1
 
 environment:
   sdk: ^3.7.0
