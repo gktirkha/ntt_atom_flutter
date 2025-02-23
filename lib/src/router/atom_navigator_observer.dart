@@ -18,7 +18,9 @@ class AtomNavigatorObserver extends NavigatorObserver {
   @override
   void didPush(Route<dynamic> route, Route<dynamic>? previousRoute) {
     super.didPush(route, previousRoute);
-    _routeStack.add(route);
+    if (route.isValidAtomRoute) {
+      _routeStack.add(route);
+    }
   }
 
   /// Called when a route is popped from the navigator stack.
@@ -28,7 +30,9 @@ class AtomNavigatorObserver extends NavigatorObserver {
   @override
   void didPop(Route<dynamic> route, Route<dynamic>? previousRoute) {
     super.didPop(route, previousRoute);
-    _routeStack.remove(route);
+    if (route.isValidAtomRoute) {
+      _routeStack.remove(route);
+    }
   }
 
   /// Called when a route is replaced with another.
@@ -38,10 +42,10 @@ class AtomNavigatorObserver extends NavigatorObserver {
   @override
   void didReplace({Route<dynamic>? newRoute, Route<dynamic>? oldRoute}) {
     super.didReplace(newRoute: newRoute, oldRoute: oldRoute);
-    if (oldRoute != null) {
+    if (oldRoute != null && oldRoute.isValidAtomRoute) {
       _routeStack.remove(oldRoute);
     }
-    if (newRoute != null) {
+    if (newRoute != null && newRoute.isValidAtomRoute) {
       _routeStack.add(newRoute);
     }
   }
@@ -58,5 +62,16 @@ class AtomNavigatorObserver extends NavigatorObserver {
       }
       return false;
     });
+  }
+}
+
+/// Extension to Check if route is atom sdk route or not
+extension AtomRouteValidatorExtension on Route? {
+  /// Checks if the route is a valid Atom route.
+  ///
+  /// Returns `true` if the route is either an `AtomDialogRoute` or `AtomPageRoute`, otherwise returns `false`.
+  bool get isValidAtomRoute {
+    if (this == null) return false;
+    return (this is AtomDialogRoute || this is AtomPageRoute);
   }
 }

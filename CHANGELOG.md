@@ -10,3 +10,6 @@
 
 ## 1.0.2
 - Changed SDK Mechanism to use singleton approach, Removed intl and used custom method for date and time
+
+## 1.0.3
+- Optimized AtomNavigatorObserver to record only atom route

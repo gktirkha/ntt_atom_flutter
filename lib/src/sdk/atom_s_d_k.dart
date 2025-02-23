@@ -6,7 +6,8 @@ import 'package:flutter/material.dart';
 import '../../ntt_atom_flutter.dart';
 import '../pages/pre_processor_page.dart';
 import '../router/atom_dialog_route.dart';
-import '../router/atom_navigator_observer.dart';
+import '../router/atom_navigator_observer.dart'
+    hide AtomRouteValidatorExtension;
 
 /// Singleton class for handling Atom Payment SDK functionalities.
 class AtomSDK {
