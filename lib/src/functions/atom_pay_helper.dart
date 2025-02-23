@@ -1,13 +1,12 @@
 import 'dart:convert';
 
 import 'package:crypto/crypto.dart';
-import 'package:intl/intl.dart';
 
 /// Generates a JSON request payload for payment processing.
 ///
 /// Takes a [data] map containing transaction details and returns a JSON-encoded string.
 String getRequestJsonData(Map<String, dynamic> data) {
-  String datetime = DateFormat('yyyy-MM-dd HH:mm:ss').format(DateTime.now());
+  String datetime = getFormattedDateTime();
 
   Map<String, dynamic> payload = {
     'payInstrument': {
@@ -79,3 +78,17 @@ bool validateSignature(Map<String, dynamic> data, String resHashKey) {
 
   return data['payInstrument']['payDetails']['signature'] == genSig;
 }
+
+/// Returns the current date and time as a formatted string in `yyyy-MM-dd HH:mm:ss` format.
+///
+/// Example output: `2025-02-23 14:05:09`
+String getFormattedDateTime() {
+  DateTime now = DateTime.now();
+  return '${now.year}-${_twoDigits(now.month)}-${_twoDigits(now.day)} '
+      '${_twoDigits(now.hour)}:${_twoDigits(now.minute)}:${_twoDigits(now.second)}';
+}
+
+/// Ensures that single-digit numbers are padded with a leading zero.
+///
+/// Example: `2` -> `02`, `10` -> `10`
+String _twoDigits(int n) => n.toString().padLeft(2, '0');
