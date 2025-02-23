@@ -1,3 +1,5 @@
+import 'dart:developer';
+
 import 'package:flutter/material.dart';
 import 'package:ntt_atom_flutter/ntt_atom_flutter.dart';
 
@@ -11,7 +13,7 @@ class MainApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      navigatorObservers: [AtomSDK.atomNavigatorObserver],
+      navigatorObservers: [AtomSDK.navigatorObserver],
       home: Home(),
     );
   }
@@ -26,12 +28,9 @@ class Home extends StatelessWidget {
       body: Center(
         child: ElevatedButton(
           onPressed: () {
-            final AtomSDK instance = AtomSDK(
-              onClose: (status, data) {
-                print('Status $status');
-                print('Data $data');
-              },
-              options: AtomPaymentOptions(
+            final instance = AtomSDK();
+            instance.checkOut(
+              sdkOptions: AtomPaymentOptions(
                 login: '317157',
                 password: 'Test@123',
                 prodid: 'NSE',
@@ -58,8 +57,13 @@ class Home extends StatelessWidget {
                 mode: AtomPaymentMode.uat,
                 txnid: 'test240223',
               ),
+              onClose: (transactionStatus, data) {
+                log(
+                  "Transaction Status ${transactionStatus.name.toString()}\nTransaction Data ${data.toString()}",
+                  name: "ATOM Payment Status",
+                );
+              },
             );
-            instance.startPayment();
           },
           child: Text('Start Payment'),
         ),

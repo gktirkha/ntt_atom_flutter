@@ -3,92 +3,92 @@ import 'dart:developer';
 
 import 'package:flutter/material.dart';
 
-import '../model/atom_constants.dart';
-import '../model/atom_payment_options.dart';
+import '../../ntt_atom_flutter.dart';
 import '../pages/pre_processor_page.dart';
 import '../router/atom_dialog_route.dart';
 import '../router/atom_navigator_observer.dart';
 
-/// The Atom SDK class for handling payments.
-///
-/// This class manages the payment flow, including starting transactions,
-/// navigating through the payment process, and handling transaction closures.
+/// Singleton class for handling Atom Payment SDK functionalities.
 class AtomSDK {
-  /// Creates an instance of [AtomSDK].
-  ///
-  /// - [onClose]: A callback function that triggers when the transaction completes.
-  /// - [options]: The payment options required for processing transactions.
-  AtomSDK({required this.onClose, required this.options});
+  /// Private constructor for singleton instance.
+  factory AtomSDK() => _instance;
+  AtomSDK._internal();
 
-  /// The navigator observer for tracking AtomSDK-related navigation.
-  static final AtomNavigatorObserver _atomNavigatorObserver =
+  /// Singleton instance of [AtomSDK].
+  static final AtomSDK _instance = AtomSDK._internal();
+
+  /// Internal navigator observer for tracking navigation events.
+  static final AtomNavigatorObserver _internalNaviGator =
       AtomNavigatorObserver();
 
-  /// Provides access to the navigator observer.
-  static NavigatorObserver get atomNavigatorObserver => _atomNavigatorObserver;
+  /// Provides the navigator observer instance for the application.
+  static NavigatorObserver get navigatorObserver => _internalNaviGator;
 
-  /// Retrieves the navigator state associated with the Atom SDK.
-  static NavigatorState? get _navigator => _atomNavigatorObserver.navigator;
+  /// Callback function triggered when the transaction process is closed.
+  static Function(
+    AtomTransactionStatus transactionStatus,
+    Map<String, dynamic> data,
+  )?
+  _onClose;
 
-  /// A log message identifier for debugging.
-  final String _logMessageName = 'Atom SDK';
+  /// Log label for debugging purposes.
+  final String _logLabel = 'Atom SDK';
 
-  /// Callback function triggered when the transaction completes.
+  /// Holds the payment options for the transaction.
+  static late AtomPaymentOptions options;
+
+  /// Closes the Atom SDK transaction and triggers the [_onClose] callback.
   ///
-  /// - [status]: The final transaction status.
-  /// - [data]: The response data from the transaction.
-  final Function(AtomTransactionStatus status, Map<dynamic, dynamic> data)
-  onClose;
-
-  /// The payment options required for processing the transaction.
-  final AtomPaymentOptions options;
-
-  /// Closes the Atom SDK and triggers the [onClose] callback.
-  ///
-  /// This method removes all Atom-related routes from the navigation stack
-  /// and invokes the [onClose] function with the transaction status and data.
-  void close({
-    required AtomTransactionStatus status,
-    required Map<dynamic, dynamic> data,
+  /// - [transactionStatus]: The status of the transaction when closed.
+  /// - [data]: Additional transaction data.
+  static void close({
+    required AtomTransactionStatus transactionStatus,
+    required Map<String, dynamic> data,
   }) {
-    _atomNavigatorObserver.closeAtomSDK();
-    onClose.call(status, data);
+    _internalNaviGator.closeAtomSDK();
+    _onClose?.call(transactionStatus, data);
   }
 
-  /// Starts the Atom payment process.
+  /// Initiates the payment checkout process.
   ///
-  /// This method initializes the payment flow by navigating to the
-  /// [PreProcessorPage] within a dialog route.
-  Future<void> startPayment() async {
+  /// - [sdkOptions]: The payment options to be used for the transaction.
+  /// - [onClose]: Callback function triggered when the transaction completes or is closed.
+  void checkOut({
+    required AtomPaymentOptions sdkOptions,
+    required Function(
+      AtomTransactionStatus transactionStatus,
+      Map<String, dynamic> data,
+    )
+    onClose,
+  }) {
     try {
-      if (_navigator == null) {
-        throw Exception('Please add AtomSDK.navigatorObserver to MaterialApp');
-      } else {
+      _onClose = onClose;
+      final navigator = _internalNaviGator.navigator;
+      if (navigator == null) {
         log(
-          'AtomSDK.navigatorObserver is added to MaterialApp',
-          name: _logMessageName,
+          'Please Add AtomSDK.navigatorObserver to navigator observer',
+          name: _logLabel,
         );
+        return;
       }
+      options = sdkOptions;
+      navigator.push(
+        AtomDialogRoute(
+          pageBuilder:
+              (context, animation, secondaryAnimation) => PreProcessorPage(),
+        ),
+      );
 
       log(
         'AtomSDK.atomPaymentOptions is set\n ${jsonEncode(options)}',
-        name: _logMessageName,
-      );
-
-      _navigator!.push(
-        AtomDialogRoute(
-          pageBuilder:
-              (context, animation, secondaryAnimation) => PreProcessorPage(
-                instance: this,
-                navigator: _atomNavigatorObserver,
-              ),
-        ),
+        name: _logLabel,
       );
     } catch (e) {
-      log(e.toString(), name: _logMessageName);
-      if (_navigator != null) {
-        _atomNavigatorObserver.closeAtomSDK();
-      }
+      log(e.toString(), name: _logLabel);
+      close(
+        transactionStatus: AtomTransactionStatus.unknown,
+        data: {'message': 'An Unknown Error Occurred', 'error': e.toString()},
+      );
     }
   }
 }

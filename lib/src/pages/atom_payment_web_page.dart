@@ -13,41 +13,21 @@ import '../model/atom_payment_options.dart';
 import '../sdk/atom_s_d_k.dart';
 import '../web_pages/web_pages.dart';
 
-/// A WebView-based payment page for processing transactions using Atom Payment Gateway.
 class AtomPaymentWebPage extends StatelessWidget {
-  /// Constructs an instance of [AtomPaymentWebPage].
-  ///
-  /// - [options]: The payment options containing transaction details.
-  /// - [payDetails]: The encrypted payment details.
-  /// - [instance]: The instance of the Atom SDK.
-  AtomPaymentWebPage({
-    super.key,
-    required this.options,
-    required this.payDetails,
-    required this.instance,
-  });
+  AtomPaymentWebPage({super.key, required this.payDetails});
 
-  /// A ValueNotifier to track if the page can be popped.
   final ValueNotifier<bool> canPop = ValueNotifier<bool>(false);
 
-  /// List of supported UPI payment apps.
   final paymentsApp = ['tez', 'phonepe', 'paytmmp', 'upi'];
 
-  /// The encrypted payment details.
   final String payDetails;
 
-  /// The instance of the Atom SDK.
-  final AtomSDK instance;
-
-  /// WebView controller for managing the in-app web view.
   late final InAppWebViewController _webViewController;
 
-  /// Completer for the WebView initialization.
   final Completer<InAppWebViewController> _inAppViewCompleter =
       Completer<InAppWebViewController>();
 
-  /// Payment options containing transaction details.
-  final AtomPaymentOptions options;
+  final AtomPaymentOptions options = AtomSDK.options;
 
   @override
   Widget build(BuildContext context) {
@@ -64,7 +44,7 @@ class AtomPaymentWebPage extends StatelessWidget {
                   return;
                 } else {
                   if (context.mounted) {
-                    showCloseConfirmationDialog(context, canPop, instance);
+                    showCloseConfirmationDialog(context, canPop);
                   }
                 }
               });
@@ -107,7 +87,6 @@ class AtomPaymentWebPage extends StatelessWidget {
     );
   }
 
-  /// Initializes the WebView when created.
   void onWebViewCreated(controller) {
     if (_inAppViewCompleter.isCompleted) {
       return;
@@ -119,7 +98,6 @@ class AtomPaymentWebPage extends StatelessWidget {
     _inAppViewCompleter.complete(controller);
   }
 
-  /// Loads the appropriate HTML payment page based on the environment mode.
   Future<void> _loadHtmlPage() async {
     final htmlFile = switch (options.mode) {
       AtomPaymentMode.uat => WebPages.uat,
@@ -139,9 +117,6 @@ class AtomPaymentWebPage extends StatelessWidget {
     );
   }
 
-  /// Handles actions when a page finishes loading.
-  ///
-  /// - If the loaded URL matches the expected return URL, it processes the transaction result.
   void onLoadStop(controller, WebUri? url) async {
     if (url == null) return;
     final urlStr = url.toString();
@@ -173,35 +148,30 @@ class AtomPaymentWebPage extends StatelessWidget {
               ''',
             )
             .then((response) {
-              instance.close(
+              AtomSDK.close(
                 data: {
                   'message':
                       'Payment Processed, Unable to parse response as custom return url was used, WebHook Response in data field',
                   'data': response,
                 },
-                status: AtomTransactionStatus.unknown,
+                transactionStatus: AtomTransactionStatus.unknown,
               );
             });
       }
     }
   }
 
-  /// Retrieves HTML content from the WebView.
   Future<String> _getHtmlContent() async {
     return await _webViewController.evaluateJavascript(
       source: "document.getElementsByTagName('h5')[0].innerHTML",
     );
   }
 
-  /// Parses the transaction response into a map.
   Map<int, String> _parseResponse(String response) {
     final split = response.trim().split('|');
     return {for (int i = 0; i < split.length; i++) i: split[i]};
   }
 
-  /// Decrypts the transaction response.
-  ///
-  /// If decryption fails, it closes the transaction with an error status.
   Future<void> _decryptTransaction(Map<int, String> values) async {
     if (values[1] == null) return;
 
@@ -217,16 +187,13 @@ class AtomPaymentWebPage extends StatelessWidget {
 
       await _validateTransaction(jsonInput);
     } catch (e) {
-      instance.close(
-        status: AtomTransactionStatus.decryptionFailed,
+      AtomSDK.close(
+        transactionStatus: AtomTransactionStatus.decryptionFailed,
         data: {'message': 'Decryption Error'},
       );
     }
   }
 
-  /// Validates the decrypted transaction response.
-  ///
-  /// If the response signature is invalid, it closes the transaction with an error status.
   Future<void> _validateTransaction(Map<String, dynamic> jsonInput) async {
     bool isSignatureValid = validateSignature(
       jsonInput,
@@ -234,8 +201,8 @@ class AtomPaymentWebPage extends StatelessWidget {
     );
 
     if (!isSignatureValid) {
-      instance.close(
-        status: AtomTransactionStatus.signatureNotMatched,
+      AtomSDK.close(
+        transactionStatus: AtomTransactionStatus.signatureNotMatched,
         data: {'message': 'Invalid Signature'},
       );
       return;
@@ -244,19 +211,18 @@ class AtomPaymentWebPage extends StatelessWidget {
     final statusCode =
         jsonInput['payInstrument']['responseDetails']['statusCode'];
     if (statusCode == 'OTS0000' || statusCode == 'OTS0551') {
-      instance.close(
-        status: AtomTransactionStatus.success,
+      AtomSDK.close(
+        transactionStatus: AtomTransactionStatus.success,
         data: {'message': 'Payment Successful', 'data': jsonInput},
       );
     } else {
-      instance.close(
-        status: AtomTransactionStatus.failed,
+      AtomSDK.close(
+        transactionStatus: AtomTransactionStatus.failed,
         data: {'message': 'Payment Failed', 'data': jsonInput},
       );
     }
   }
 
-  /// Returns the name of the payment app based on its scheme.
   String getAppName(String scheme) {
     return switch (scheme) {
       'tez' => 'Google Pay',

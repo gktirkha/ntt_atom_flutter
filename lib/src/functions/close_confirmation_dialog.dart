@@ -3,17 +3,15 @@ import 'package:flutter/material.dart';
 import '../model/atom_constants.dart';
 import '../sdk/atom_s_d_k.dart';
 
-/// Displays a confirmation dialog when the user attempts to close the payment.
+/// Displays a confirmation dialog before canceling the payment.
 ///
-/// This function shows a dialog with options to either cancel the payment or go back.
+/// [context] The build context.
+/// [canPop] A ValueNotifier that determines whether the dialog can be dismissed.
 ///
-/// - [context]: The build context.
-/// - [canPop]: A ValueNotifier that determines if the screen can be popped.
-/// - [instance]: The AtomSDK instance used to handle the transaction.
+/// Returns a Future that resolves when the dialog is dismissed.
 Future<Object?> showCloseConfirmationDialog(
   BuildContext context,
   ValueNotifier<bool> canPop,
-  AtomSDK instance,
 ) {
   return showGeneralDialog(
     context: context,
@@ -62,8 +60,8 @@ Future<Object?> showCloseConfirmationDialog(
                       onPressed: () {
                         Navigator.of(context).pop(true);
                         canPop.value = true;
-                        instance.close(
-                          status: AtomTransactionStatus.cancelled,
+                        AtomSDK.close(
+                          transactionStatus: AtomTransactionStatus.cancelled,
                           data: {'message': 'Payment Cancelled By User'},
                         );
                       },
