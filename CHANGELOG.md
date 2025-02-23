@@ -7,3 +7,6 @@
 
 ## 1.0.1
 - License Update
+
+## 1.0.2
+- Changed SDK Mechanism to use singleton approach, Removed intl and used custom method for date and time
