@@ -130,6 +130,14 @@ class AtomPaymentWebPage extends StatelessWidget {
   /// Callback when page load stops.
   void onLoadStop(controller, WebUri? url) async {
     if (url == null) return;
+    await controller.evaluateJavascript(
+      source: """
+            var meta = document.createElement('meta');
+            meta.name = 'viewport';
+            meta.content = 'width=device-width, initial-scale=1.0';
+            document.getElementsByTagName('head')[0].appendChild(meta);
+            """,
+    );
     final urlStr = url.toString();
     if (urlStr.contains('AIPAYLocalFile')) {
       await _webViewController.evaluateJavascript(
