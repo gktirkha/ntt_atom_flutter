@@ -187,10 +187,10 @@ class AtomPaymentWebPage extends StatelessWidget {
 
   /// Decrypts the transaction response.
   Future<void> _decryptTransaction(Map<int, String> values) async {
-    if (values[1] == null) return;
+    if (values[1] == null) throw Exception();
 
     final splitTwo = values[1]!.split('=');
-    if (splitTwo.length < 2) return;
+    if (splitTwo.length < 2) throw Exception();
 
     try {
       final String result = await AESHelper.getAtomDecryption(
@@ -221,6 +221,20 @@ class AtomPaymentWebPage extends StatelessWidget {
         data: {'message': 'Invalid Signature'},
       );
       return;
+    } else {
+      final statusCode =
+          jsonInput['payInstrument']['responseDetails']['statusCode'];
+      if (statusCode == 'OTS0000' || statusCode == 'OTS0551') {
+        AtomSDK.close(
+          transactionStatus: AtomTransactionStatus.success,
+          data: jsonInput,
+        );
+      } else {
+        AtomSDK.close(
+          transactionStatus: AtomTransactionStatus.failed,
+          data: jsonInput,
+        );
+      }
     }
   }
 

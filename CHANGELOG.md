@@ -12,3 +12,6 @@
 
 ## 1.0.3
 - Optimized AtomNavigatorObserver to record only atom route
+
+## 1.0.4
+- Fix: SDK not closing on payment success
