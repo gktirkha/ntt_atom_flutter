@@ -5,7 +5,7 @@ homepage: https://github.com/gktirkha/ntt_atom_flutter
 version: 1.0.4
 
 environment:
-  sdk: ^3.7.0
+  sdk: ">=3.4.3 <4.0.0"
   flutter: ">=1.17.0"
 
 dependencies:
