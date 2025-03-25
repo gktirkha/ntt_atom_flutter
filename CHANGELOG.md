@@ -15,3 +15,6 @@
 
 ## 1.0.4
 - Fix: SDK not closing on payment success
+
+## 1.0.5
+- License Update
