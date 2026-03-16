@@ -18,3 +18,6 @@
 
 ## 1.0.5
 - License Update
+
+## 1.0.6
+- Dependency Update

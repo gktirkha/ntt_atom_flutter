@@ -16,16 +16,15 @@ class PreProcessorPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return ValueListenableBuilder(
       valueListenable: canPop,
-      builder:
-          (context, value, child) => PopScope(
-            canPop: value,
-            child: child!,
-            onPopInvokedWithResult: (didPop, result) {
-              if (value) {
-                return;
-              }
-            },
-          ),
+      builder: (context, value, child) => PopScope(
+        canPop: value,
+        child: child!,
+        onPopInvokedWithResult: (didPop, result) {
+          if (value) {
+            return;
+          }
+        },
+      ),
       child: Material(
         color: Colors.transparent,
         child: Center(

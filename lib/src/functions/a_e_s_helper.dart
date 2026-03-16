@@ -42,8 +42,9 @@ class AESHelper {
 
     final iv = Uint8List.fromList(ivBytes);
 
-    final encryptedBytes =
-        aes.encrypt(utf8.encode(plainText), iv: IV(iv)).bytes;
+    final encryptedBytes = aes
+        .encrypt(utf8.encode(plainText), iv: IV(iv))
+        .bytes;
 
     return _byteToHex(encryptedBytes);
   }

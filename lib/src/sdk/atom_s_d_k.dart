@@ -75,8 +75,8 @@ class AtomSDK {
       options = sdkOptions;
       navigator.push(
         AtomDialogRoute(
-          pageBuilder:
-              (context, animation, secondaryAnimation) => PreProcessorPage(),
+          pageBuilder: (context, animation, secondaryAnimation) =>
+              PreProcessorPage(),
         ),
       );
 
