@@ -16,7 +16,7 @@ part 'atom_payment_options.g.dart';
 
 @freezed
 /// Options To be configured for SDK to work
-class AtomPaymentOptions with _$AtomPaymentOptions {
+sealed class AtomPaymentOptions with _$AtomPaymentOptions {
   /// Creates an instance of [AtomPaymentOptions].
   ///
   /// All required fields must be provided for proper functioning.

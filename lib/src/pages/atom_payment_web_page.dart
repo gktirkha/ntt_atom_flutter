@@ -96,7 +96,7 @@ class AtomPaymentWebPage extends StatelessWidget {
   }
 
   /// Callback when the WebView is created.
-  void onWebViewCreated(controller) {
+  void onWebViewCreated(InAppWebViewController controller) {
     if (_inAppViewCompleter.isCompleted) {
       return;
     }
@@ -128,7 +128,7 @@ class AtomPaymentWebPage extends StatelessWidget {
   }
 
   /// Callback when page load stops.
-  void onLoadStop(controller, WebUri? url) async {
+  void onLoadStop(InAppWebViewController controller, WebUri? url) async {
     if (url == null) return;
     await controller.evaluateJavascript(
       source: """
