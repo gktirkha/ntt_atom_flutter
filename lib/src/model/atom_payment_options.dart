@@ -64,8 +64,7 @@ sealed class AtomPaymentOptions with _$AtomPaymentOptions {
 
     /// Optional configuration for a custom return URL.
     /// If null, the SDK uses its default URL and fully parses the transaction response.
-    @JsonKey(name: 'returnUrlConfig')
-    AtomReturnUrlConfig? returnUrlConfig,
+    @JsonKey(name: 'returnUrlConfig') AtomReturnUrlConfig? returnUrlConfig,
 
     /// The payment mode for the transaction.
     @JsonKey(name: 'mode') required AtomPaymentMode mode,

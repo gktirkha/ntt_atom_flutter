@@ -165,8 +165,7 @@ class AtomPaymentWebPage extends StatelessWidget {
 
     if (urlStr.contains(_gatewayReturnUrl)) {
       final config = options.returnUrlConfig;
-      final hasValidUrl =
-          config != null && config.returnUrl.trim().isNotEmpty;
+      final hasValidUrl = config != null && config.returnUrl.trim().isNotEmpty;
 
       if (!hasValidUrl) {
         _getHtmlContent().then((response) {
