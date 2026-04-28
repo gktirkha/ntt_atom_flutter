@@ -21,7 +21,11 @@ _AtomPaymentOptions _$AtomPaymentOptionsFromJson(Map<String, dynamic> json) =>
       responseHashKey: json['responseHashKey'] as String,
       requestEncryptionKey: json['requestencryptionKey'] as String,
       responseDecryptionKey: json['responseencypritonKey'] as String,
-      returnUrl: json['returnUrl'] as String? ?? AtomConstants.defaultUrl,
+      returnUrlConfig: json['returnUrlConfig'] == null
+          ? null
+          : AtomReturnUrlConfig.fromJson(
+              json['returnUrlConfig'] as Map<String, dynamic>,
+            ),
       mode: $enumDecode(_$AtomPaymentModeEnumMap, json['mode']),
       custFirstName: json['custFirstName'] as String?,
       custLastName: json['custLastName'] as String?,
@@ -51,7 +55,7 @@ Map<String, dynamic> _$AtomPaymentOptionsToJson(_AtomPaymentOptions instance) =>
       'responseHashKey': instance.responseHashKey,
       'requestencryptionKey': instance.requestEncryptionKey,
       'responseencypritonKey': instance.responseDecryptionKey,
-      'returnUrl': instance.returnUrl,
+      'returnUrlConfig': instance.returnUrlConfig,
       'mode': _$AtomPaymentModeEnumMap[instance.mode]!,
       'custFirstName': instance.custFirstName,
       'custLastName': instance.custLastName,

@@ -30,6 +30,7 @@ enum AtomTransactionStatus {
 
 /// Contains constant values for Atom payment processing.
 abstract class AtomConstants {
-  /// Default URL for the Atom payment gateway.
-  static const String defaultUrl = 'https://pgtest.atomtech.in/mobilesdk/param';
+  /// Default return URL used by the SDK to capture and parse the transaction response.
+  static const String defaultReturnUrl =
+      'https://pgtest.atomtech.in/mobilesdk/param';
 }

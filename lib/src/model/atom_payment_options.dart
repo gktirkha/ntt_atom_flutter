@@ -10,6 +10,7 @@ library;
 import 'package:freezed_annotation/freezed_annotation.dart';
 
 import 'atom_constants.dart';
+import 'atom_return_url_config.dart';
 
 part 'atom_payment_options.freezed.dart';
 part 'atom_payment_options.g.dart';
@@ -61,12 +62,10 @@ sealed class AtomPaymentOptions with _$AtomPaymentOptions {
     @JsonKey(name: 'responseencypritonKey')
     required String responseDecryptionKey,
 
-    /// The return URL after the transaction is processed.
-    /// Defaults to `AtomConstants.defaultUrl`.
-    /// if custom url is used, SDK wont be able to return response and transaction status (what ever the url returns will be returned as string)
-    @Default(AtomConstants.defaultUrl)
-    @JsonKey(name: 'returnUrl')
-    String returnUrl,
+    /// Optional configuration for a custom return URL.
+    /// If null, the SDK uses its default URL and fully parses the transaction response.
+    @JsonKey(name: 'returnUrlConfig')
+    AtomReturnUrlConfig? returnUrlConfig,
 
     /// The payment mode for the transaction.
     @JsonKey(name: 'mode') required AtomPaymentMode mode,

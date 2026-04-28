@@ -137,19 +137,31 @@ Example:
     ```
 
 
-## Drawbacks of Using a Custom Return URL  
+## Custom Return URL
 
-When initializing a transaction, the **returnUrl** is optional. However, using a custom return URL comes with some limitations:  
+By default (`returnUrlConfig` is `null`) the SDK uses its own return URL, fully parses the transaction response, and delivers a typed `AtomTransactionStatus` to `onClose`. No extra configuration is needed for this path.
 
-1. **Limited Transaction Status Detection:**  
-   - If a return URL is provided, the SDK **cannot automatically detect the transaction status** or retrieve data from NTT.  
-   - Instead, the SDK will return whatever response it receives from the server as a raw string.  
+If you need your backend to also receive the transaction data, set `returnUrlConfig` in `AtomPaymentOptions`:
 
-2. **No Webhook Notification:**  
-   - If a return URL is **not** provided, the backend server **will not receive a webhook response** from NTT.  
+```dart
+AtomPaymentOptions(
+  ...
+  returnUrlConfig: AtomReturnUrlConfig(
+    returnUrl: 'https://your-server.com/payment/callback',
+    mode: AtomReturnUrlMode.forwardUnencrypted, // or forwardEncrypted / sendToServer
+  ),
+)
+```
 
-### **Solution:**  
-If you choose to use a custom return URL, you will need to set up a **custom backend API** to manually check the transaction status. This ensures you can verify payments reliably.  
+### Modes
+
+| Mode | How it works | App gets status? |
+|---|---|---|
+| `sendToServer` | Gateway redirects the WebView straight to your URL. The app receives the raw page content as a string. | No (unknown) |
+| `forwardEncrypted` | SDK captures the response at its default URL, extracts the encrypted payload from the page, POSTs it as-is (`Content-Type: text/plain`) to your URL, then separately decrypts it to determine the status for the app. | Yes |
+| `forwardUnencrypted` | SDK captures the response at its default URL, decrypts it, POSTs the **JSON** (`Content-Type: application/json`) to your URL, then parses the status for the app. | Yes |
+
+> **Note:** For `forwardEncrypted` and `forwardUnencrypted`, a POST failure to your server is silently ignored — the SDK status callback is always delivered.
 
 ## Android Configuration
 

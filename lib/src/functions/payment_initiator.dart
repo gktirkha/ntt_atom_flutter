@@ -4,6 +4,8 @@ import 'dart:developer';
 import 'package:http/http.dart' as http;
 
 import '../model/atom_constants.dart';
+import '../model/atom_payment_options.dart';
+import '../model/atom_return_url_config.dart';
 import '../pages/atom_payment_web_page.dart';
 import '../router/atom_page_route.dart';
 import '../sdk/atom_s_d_k.dart';
@@ -69,7 +71,7 @@ Future<void> _getAtomTokenId({required String authEncryptedString}) async {
       'merchId': AtomSDK.options.login,
       'emailId': AtomSDK.options.email,
       'mobileNumber': AtomSDK.options.mobile,
-      'returnUrl': AtomSDK.options.returnUrl,
+      'returnUrl': _gatewayReturnUrl(AtomSDK.options),
     });
 
     AtomSDK.navigatorObserver.navigator?.pushReplacement(
@@ -80,6 +82,21 @@ Future<void> _getAtomTokenId({required String authEncryptedString}) async {
   } catch (e) {
     throw Exception('Failed to initialize payment:\n ${e.toString()}');
   }
+}
+
+/// Returns the return URL to pass to the Atom gateway.
+///
+/// For [AtomReturnUrlMode.sendToServer] the user's URL is used so the gateway
+/// redirects directly to their server. For all other configs (including null)
+/// the SDK's default URL is used so it can capture and parse the response.
+String _gatewayReturnUrl(AtomPaymentOptions options) {
+  final config = options.returnUrlConfig;
+  if (config != null &&
+      config.returnUrl.trim().isNotEmpty &&
+      config.mode == AtomReturnUrlMode.sendToServer) {
+    return config.returnUrl;
+  }
+  return AtomConstants.defaultReturnUrl;
 }
 
 /// Returns the authentication API URL based on the payment mode.

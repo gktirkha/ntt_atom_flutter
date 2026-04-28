@@ -3,6 +3,7 @@ import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
+import 'package:http/http.dart' as http;
 import 'package:url_launcher/url_launcher.dart';
 
 import '../functions/a_e_s_helper.dart';
@@ -10,6 +11,7 @@ import '../functions/atom_pay_helper.dart';
 import '../functions/close_confirmation_dialog.dart';
 import '../model/atom_constants.dart';
 import '../model/atom_payment_options.dart';
+import '../model/atom_return_url_config.dart';
 import '../sdk/atom_s_d_k.dart';
 import '../web_pages/web_pages.dart';
 
@@ -36,6 +38,20 @@ class AtomPaymentWebPage extends StatelessWidget {
 
   /// Payment options for Atom SDK.
   final AtomPaymentOptions options = AtomSDK.options;
+
+  /// The return URL that was passed to the Atom gateway.
+  ///
+  /// For [AtomReturnUrlMode.sendToServer] this is the user's custom URL.
+  /// For all other configs (including null) this is the SDK default URL.
+  String get _gatewayReturnUrl {
+    final config = options.returnUrlConfig;
+    if (config != null &&
+        config.returnUrl.trim().isNotEmpty &&
+        config.mode == AtomReturnUrlMode.sendToServer) {
+      return config.returnUrl;
+    }
+    return AtomConstants.defaultReturnUrl;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -129,6 +145,7 @@ class AtomPaymentWebPage extends StatelessWidget {
   /// Callback when page load stops.
   void onLoadStop(InAppWebViewController controller, WebUri? url) async {
     if (url == null) return;
+
     await controller.evaluateJavascript(
       source: """
             var meta = document.createElement('meta');
@@ -137,23 +154,31 @@ class AtomPaymentWebPage extends StatelessWidget {
             document.getElementsByTagName('head')[0].appendChild(meta);
             """,
     );
+
     final urlStr = url.toString();
+
     if (urlStr.contains('AIPAYLocalFile')) {
       await _webViewController.evaluateJavascript(
         source: "openPay('$payDetails')",
       );
     }
 
-    if (urlStr.contains(options.returnUrl)) {
-      if (options.returnUrl.contains(AtomConstants.defaultUrl)) {
+    if (urlStr.contains(_gatewayReturnUrl)) {
+      final config = options.returnUrlConfig;
+      final hasValidUrl =
+          config != null && config.returnUrl.trim().isNotEmpty;
+
+      if (!hasValidUrl) {
         _getHtmlContent().then((response) {
           final values = _parseResponse(response);
           _decryptTransaction(values);
         });
       } else {
-        _webViewController
-            .evaluateJavascript(
-              source: '''
+        switch (config.mode) {
+          case AtomReturnUrlMode.sendToServer:
+            _webViewController
+                .evaluateJavascript(
+                  source: '''
               (function() {
                 try {
                   let content = JSON.stringify(JSON.parse(document.body.innerText)).toString();
@@ -164,17 +189,30 @@ class AtomPaymentWebPage extends StatelessWidget {
                 }
               })();
               ''',
-            )
-            .then((response) {
-              AtomSDK.close(
-                data: {
-                  'message':
-                      'Payment Processed, Unable to parse response as custom return url was used, WebHook Response in data field',
-                  'data': response,
-                },
-                transactionStatus: AtomTransactionStatus.unknown,
-              );
+                )
+                .then((response) {
+                  AtomSDK.close(
+                    data: {
+                      'message':
+                          'Payment Processed, Unable to parse response as custom return url was used, WebHook Response in data field',
+                      'data': response,
+                    },
+                    transactionStatus: AtomTransactionStatus.unknown,
+                  );
+                });
+
+          case AtomReturnUrlMode.forwardEncrypted:
+            _getHtmlContent().then((response) {
+              final values = _parseResponse(response);
+              _decryptAndForwardEncrypted(values, config.returnUrl);
             });
+
+          case AtomReturnUrlMode.forwardUnencrypted:
+            _getHtmlContent().then((response) {
+              final values = _parseResponse(response);
+              _decryptAndForwardUnencrypted(values, config.returnUrl);
+            });
+        }
       }
     }
   }
@@ -192,19 +230,102 @@ class AtomPaymentWebPage extends StatelessWidget {
     return {for (int i = 0; i < split.length; i++) i: split[i]};
   }
 
-  /// Decrypts the transaction response.
-  Future<void> _decryptTransaction(Map<int, String> values) async {
-    if (values[1] == null) throw Exception();
-
+  /// Extracts the raw encrypted text from the parsed response map.
+  String? _extractEncryptedText(Map<int, String> values) {
+    if (values[1] == null) return null;
     final splitTwo = values[1]!.split('=');
-    if (splitTwo.length < 2) throw Exception();
+    if (splitTwo.length < 2) return null;
+    return splitTwo[1];
+  }
 
+  /// Decrypts the transaction response and determines the SDK status.
+  Future<void> _decryptTransaction(Map<int, String> values) async {
+    final encryptedText = _extractEncryptedText(values);
+    if (encryptedText == null) {
+      AtomSDK.close(
+        transactionStatus: AtomTransactionStatus.decryptionFailed,
+        data: {'message': 'Decryption Error'},
+      );
+      return;
+    }
     try {
       final String result = await AESHelper.getAtomDecryption(
-        encryptedText: splitTwo[1].toString(),
+        encryptedText: encryptedText,
         key: options.responseDecryptionKey,
       );
       final Map<String, dynamic> jsonInput = jsonDecode(result);
+      await _validateTransaction(jsonInput);
+    } catch (e) {
+      AtomSDK.close(
+        transactionStatus: AtomTransactionStatus.decryptionFailed,
+        data: {'message': 'Decryption Error'},
+      );
+    }
+  }
+
+  /// POSTs the extracted encrypted payload as plain text to [forwardUrl],
+  /// then decrypts and validates to determine the SDK status.
+  Future<void> _decryptAndForwardEncrypted(
+    Map<int, String> values,
+    String forwardUrl,
+  ) async {
+    final encryptedText = _extractEncryptedText(values);
+    if (encryptedText == null) {
+      AtomSDK.close(
+        transactionStatus: AtomTransactionStatus.decryptionFailed,
+        data: {'message': 'Decryption Error'},
+      );
+      return;
+    }
+
+    await _postToServer(
+      url: forwardUrl,
+      body: encryptedText,
+      contentType: 'text/plain',
+    );
+
+    try {
+      final String result = await AESHelper.getAtomDecryption(
+        encryptedText: encryptedText,
+        key: options.responseDecryptionKey,
+      );
+      final Map<String, dynamic> jsonInput = jsonDecode(result);
+      await _validateTransaction(jsonInput);
+    } catch (e) {
+      AtomSDK.close(
+        transactionStatus: AtomTransactionStatus.decryptionFailed,
+        data: {'message': 'Decryption Error'},
+      );
+    }
+  }
+
+  /// Decrypts the response, POSTs the JSON to [forwardUrl], then validates
+  /// to determine the SDK status.
+  Future<void> _decryptAndForwardUnencrypted(
+    Map<int, String> values,
+    String forwardUrl,
+  ) async {
+    final encryptedText = _extractEncryptedText(values);
+    if (encryptedText == null) {
+      AtomSDK.close(
+        transactionStatus: AtomTransactionStatus.decryptionFailed,
+        data: {'message': 'Decryption Error'},
+      );
+      return;
+    }
+
+    try {
+      final String result = await AESHelper.getAtomDecryption(
+        encryptedText: encryptedText,
+        key: options.responseDecryptionKey,
+      );
+      final Map<String, dynamic> jsonInput = jsonDecode(result);
+
+      await _postToServer(
+        url: forwardUrl,
+        body: jsonEncode(jsonInput),
+        contentType: 'application/json',
+      );
 
       await _validateTransaction(jsonInput);
     } catch (e) {
@@ -213,6 +334,22 @@ class AtomPaymentWebPage extends StatelessWidget {
         data: {'message': 'Decryption Error'},
       );
     }
+  }
+
+  /// POSTs [body] to [url]. Failures are silently ignored so the SDK status
+  /// callback is always delivered regardless of forwarding outcome.
+  Future<void> _postToServer({
+    required String url,
+    required String body,
+    required String contentType,
+  }) async {
+    try {
+      await http.post(
+        Uri.parse(url),
+        headers: {'Content-Type': contentType},
+        body: body,
+      );
+    } catch (_) {}
   }
 
   /// Validates the decrypted transaction data.
