@@ -1,3 +1,6 @@
+## 1.0.7+1
+- Updated Readme
+
 ## 1.0.7
 - Added `AtomReturnUrlConfig` model with three forwarding modes: `sendToServer`, `forwardEncrypted`, and `forwardUnencrypted`
 - Replaced `returnUrl` string field in `AtomPaymentOptions` with nullable `returnUrlConfig: AtomReturnUrlConfig?`; passing `null` (default) preserves existing behavior

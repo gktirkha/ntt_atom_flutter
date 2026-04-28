@@ -217,6 +217,3 @@ Contributions are welcome! Please fork the repository and submit a pull request.
 
 # License
 ntt_atom_flutter is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
-
-# API reference
-Please check [API reference](https://gktirkha.github.io/flutter_packages_doc/ntt_atom_flutter) for documentation
