@@ -151,6 +151,55 @@ When initializing a transaction, the **returnUrl** is optional. However, using a
 ### **Solution:**  
 If you choose to use a custom return URL, you will need to set up a **custom backend API** to manually check the transaction status. This ensures you can verify payments reliably.  
 
+## Android Configuration
+
+Add the `INTERNET` permission and a `<queries>` block to your `android/app/src/main/AndroidManifest.xml`. The `<queries>` block is required on Android 11+ (API 30+) for the OS to allow the SDK to launch UPI payment apps.
+
+```xml
+<manifest>
+    <uses-permission android:name="android.permission.INTERNET" />
+
+    <queries>
+        <intent>
+            <action android:name="android.intent.action.VIEW" />
+            <data android:scheme="tez" />
+        </intent>
+        <intent>
+            <action android:name="android.intent.action.VIEW" />
+            <data android:scheme="phonepe" />
+        </intent>
+        <intent>
+            <action android:name="android.intent.action.VIEW" />
+            <data android:scheme="paytmmp" />
+        </intent>
+        <intent>
+            <action android:name="android.intent.action.VIEW" />
+            <data android:scheme="upi" />
+        </intent>
+    </queries>
+
+    <application ...>
+        ...
+    </application>
+</manifest>
+```
+
+## iOS Configuration
+
+To allow the SDK to launch UPI payment apps (Google Pay, PhonePe, Paytm) on iOS, you must declare their URL schemes in your app's `Info.plist`. Without this, iOS will silently block the deep link and the SDK will show a snackbar asking the user to try another payment method.
+
+Add the following to your `ios/Runner/Info.plist`:
+
+```xml
+<key>LSApplicationQueriesSchemes</key>
+<array>
+    <string>tez</string>
+    <string>phonepe</string>
+    <string>paytmmp</string>
+    <string>upi</string>
+</array>
+```
+
 # Contributions
 Contributions are welcome! Please fork the repository and submit a pull request. For bug reports or feature requests, please open an issue on the [GitHub repository.](https://github.com/gktirkha/ntt_atom_flutter)
 
