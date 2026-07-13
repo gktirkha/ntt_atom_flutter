@@ -29,7 +29,7 @@ class Home extends StatefulWidget {
 class _HomeState extends State<Home> {
   final _amountController = TextEditingController(text: '400');
   final _returnUrlController = TextEditingController();
-  AtomReturnUrlMode _selectedMode = AtomReturnUrlMode.sendToServer;
+  AtomCallbackMode _selectedMode = .sendToServer;
 
   @override
   void dispose() {
@@ -45,7 +45,7 @@ class _HomeState extends State<Home> {
   }
 
   void _startPayment() {
-    AtomSDK().checkOut(
+    AtomSDK.checkOut(
       sdkOptions: AtomPaymentOptions(
         login: '317157',
         password: 'Test@123',
@@ -70,7 +70,7 @@ class _HomeState extends State<Home> {
         udf3: 'udf3',
         udf4: 'udf4',
         udf5: 'udf5',
-        mode: AtomPaymentMode.uat,
+        mode: .uat,
         txnid: 'test240223',
         returnUrlConfig: _returnUrlConfig,
       ),
@@ -116,7 +116,7 @@ class _HomeState extends State<Home> {
             ),
             if (hasReturnUrl) ...[
               const SizedBox(height: 16),
-              DropdownButtonFormField<AtomReturnUrlMode>(
+              DropdownButtonFormField<AtomCallbackMode>(
                 initialValue: _selectedMode,
                 decoration: const InputDecoration(
                   labelText: 'Return URL Mode',
@@ -124,15 +124,15 @@ class _HomeState extends State<Home> {
                 ),
                 items: const [
                   DropdownMenuItem(
-                    value: AtomReturnUrlMode.sendToServer,
+                    value: .sendToServer,
                     child: Text('Send to Server'),
                   ),
                   DropdownMenuItem(
-                    value: AtomReturnUrlMode.forwardEncrypted,
+                    value: .forwardEncrypted,
                     child: Text('Forward Encrypted'),
                   ),
                   DropdownMenuItem(
-                    value: AtomReturnUrlMode.forwardUnencrypted,
+                    value: .forwardUnencrypted,
                     child: Text('Forward Unencrypted'),
                   ),
                 ],

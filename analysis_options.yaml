@@ -2,9 +2,6 @@ include: package:flutter_lints/flutter.yaml
 analyzer:
   errors:
     constant_identifier_names: ignore
-  exclude:
-    - "**/*.g.dart"
-
 
 linter:
   rules:
@@ -15,4 +12,3 @@ linter:
     - require_trailing_commas
     - sort_pub_dependencies
     - prefer_single_quotes
-    - public_member_api_docs
