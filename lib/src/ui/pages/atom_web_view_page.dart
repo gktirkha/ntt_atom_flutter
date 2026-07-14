@@ -1,19 +1,13 @@
 import 'dart:convert';
 import 'dart:developer';
 
-import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
-import 'package:url_launcher/url_launcher.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 
 import '../../../ntt_atom_flutter.dart';
 import '../../constants/atom_constants.dart';
-import '../../constants/atom_pg_status_codes.dart';
 import '../../constants/atom_web_page.dart';
-import '../../constants/enums/atom_upi_app.dart';
-import '../../helpers/a_e_s_helper.dart';
-import '../../helpers/html_helper.dart';
-import '../../helpers/signature_helper.dart';
+import '../../helpers/atom_web_view_helper.dart';
 
 class AtomWebViewPage extends StatefulWidget {
   const AtomWebViewPage({
@@ -45,10 +39,26 @@ class _AtomWebViewPageState extends State<AtomWebViewPage> {
 
   late final WebViewController webViewController = WebViewController()
     ..setJavaScriptMode(.unrestricted)
-    ..setNavigationDelegate(NavigationDelegate(onPageFinished: _onPageFinished))
+    ..setNavigationDelegate(
+      NavigationDelegate(
+        onPageFinished: (url) async {
+          if (!url.startsWith(returnUrl)) return;
+
+          final result = await webViewController.runJavaScriptReturningResult(
+            'document.documentElement.outerHTML',
+          );
+          final html = result is String
+              ? jsonDecode(result) as String
+              : '$result';
+          log(html, name: AtomConstants.logName);
+        },
+      ),
+    )
     ..addJavaScriptChannel(
       AtomConstants.errorChannelName,
-      onMessageReceived: _onJsError,
+      onMessageReceived: (message) {
+        AtomWebViewHelper.handleJsError(message);
+      },
     )
     ..loadHtmlString(initFile)
     ..setOnConsoleMessage((message) {
@@ -64,13 +74,31 @@ class _AtomWebViewPageState extends State<AtomWebViewPage> {
                       meta.content = 'width=device-width, initial-scale=1.0';
                       document.getElementsByTagName('head')[0].appendChild(meta);
           ''');
-          await _resolveForwarding(
-            url,
-            widget.options.returnUrlConfig!,
-            widget.forwardUrl,
+          await AtomWebViewHelper.resolveForwarding(
+            webViewController: webViewController,
+            url: url,
+            returnUrlConfig: widget.options.returnUrlConfig!,
+            forwardUrl: widget.forwardUrl,
+            options: widget.options,
           );
         },
-        onNavigationRequest: _onNavigationRequest,
+        onNavigationRequest: (request) {
+          return AtomWebViewHelper.resolveNavigationRequest(
+            request,
+            onLaunchFailure: (upiApp) {
+              if (!mounted) return;
+              ScaffoldMessenger.of(context).clearSnackBars();
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(
+                    'Unable To Start ${upiApp.appName} Transaction, '
+                    'Please Try other Payment Method',
+                  ),
+                ),
+              );
+            },
+          );
+        },
       ),
     );
 
@@ -81,52 +109,6 @@ class _AtomWebViewPageState extends State<AtomWebViewPage> {
       widget.options.returnUrlConfig != null,
       'AtomPaymentOptions.returnUrlConfig must not be null.',
     );
-  }
-
-  void _onJsError(JavaScriptMessage message) {
-    log('openPay threw: ${message.message}', name: AtomConstants.logName);
-    AtomSDK.close(
-      transactionStatus: .failed,
-      data: {'message': message.message},
-    );
-  }
-
-  Future<NavigationDecision> _onNavigationRequest(
-    NavigationRequest request,
-  ) async {
-    final uri = Uri.tryParse(request.url);
-    final AtomUpiApp? upiApp = uri == null ? null : .fromScheme(uri.scheme);
-    if (uri == null || upiApp == null) {
-      return .navigate;
-    }
-
-    try {
-      await launchUrl(uri, mode: LaunchMode.externalApplication);
-    } catch (e) {
-      log('Unable to launch UPI app URL: $e', name: AtomConstants.logName);
-      if (mounted) {
-        ScaffoldMessenger.of(context).clearSnackBars();
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              'Unable To Start ${upiApp.appName} Transaction, '
-              'Please Try other Payment Method',
-            ),
-          ),
-        );
-      }
-    }
-    return .prevent;
-  }
-
-  Future<void> _onPageFinished(String url) async {
-    if (!url.startsWith(returnUrl)) return;
-
-    final result = await webViewController.runJavaScriptReturningResult(
-      'document.documentElement.outerHTML',
-    );
-    final html = result is String ? jsonDecode(result) as String : '$result';
-    log(html, name: AtomConstants.logName);
   }
 
   @override
@@ -144,114 +126,5 @@ class _AtomWebViewPageState extends State<AtomWebViewPage> {
         body: SafeArea(child: WebViewWidget(controller: webViewController)),
       ),
     );
-  }
-
-  Future<void> _resolveForwarding(
-    String url,
-    AtomReturnUrlConfig returnUrlConfig,
-    String? forwardUrl,
-  ) async {
-    final returnUrl = returnUrlConfig.returnUrl;
-    if (!_areUrlsMatching(url, returnUrl)) return;
-    switch (returnUrlConfig.mode) {
-      case .sendToServer:
-        AtomSDK.close(transactionStatus: .unknown, data: {});
-        break;
-
-      case .forwardUnencrypted:
-        final encryptedText =
-            await HtmlHelper.extractContentFromDefaultPGCallBack(
-              webViewController,
-            );
-        if (forwardUrl != null && encryptedText != null) {
-          await _forwardTxn(encryptedText.toString(), forwardUrl);
-        }
-        final decryptedTxn = await _extractTransaction(encryptedText);
-        _validateAndCloseSDK(decryptedTxn);
-        break;
-
-      case .forwardEncrypted:
-        final encryptedText =
-            await HtmlHelper.extractContentFromDefaultPGCallBack(
-              webViewController,
-            );
-        final decryptedTxn = await _extractTransaction(encryptedText);
-        if (forwardUrl != null && decryptedTxn != null) {
-          await _forwardTxn(jsonEncode(decryptedTxn), forwardUrl);
-        }
-        _validateAndCloseSDK(decryptedTxn);
-        break;
-    }
-  }
-
-  bool _areUrlsMatching(String l1, String l2) {
-    return l1.contains(l2) || l2.contains(l1);
-  }
-
-  Future<Map<String, dynamic>?> _extractTransaction(
-    String? encryptedText,
-  ) async {
-    if (encryptedText == null) {
-      return null;
-    }
-
-    try {
-      final decrypted = await AESHelper.decrypt(
-        encryptedText: encryptedText,
-        key: widget.options.responseDecryptionKey,
-      );
-
-      return jsonDecode(decrypted);
-    } catch (e) {
-      return null;
-    }
-  }
-
-  Future<void> _forwardTxn(String content, String forwardUrl) async {
-    final Dio dio = .new();
-    try {
-      await dio.post(
-        forwardUrl,
-        data: content,
-        options: .new(contentType: Headers.textPlainContentType),
-      );
-    } catch (e) {
-      log(
-        name: AtomConstants.logName,
-        'Transaction token request threw an exception: $e',
-      );
-    } finally {
-      dio.close();
-    }
-  }
-
-  Future<void> _validateAndCloseSDK(Map<String, dynamic>? jsonInput) async {
-    if (jsonInput == null) {
-      AtomSDK.close(
-        transactionStatus: .decryptionFailed,
-        data: {'message': 'Invalid Signature'},
-      );
-      return;
-    }
-    bool isSignatureValid = await SignatureHelper.validateSignature(
-      jsonInput,
-      widget.options.responseHashKey,
-    );
-
-    if (!isSignatureValid) {
-      AtomSDK.close(
-        transactionStatus: .signatureNotMatched,
-        data: {'message': 'Invalid Signature'},
-      );
-      return;
-    } else {
-      final statusCode =
-          jsonInput['payInstrument']['responseDetails']['statusCode'];
-      if (AtomPgStatusCodes.success.contains(statusCode)) {
-        AtomSDK.close(transactionStatus: .success, data: jsonInput);
-      } else {
-        AtomSDK.close(transactionStatus: .failed, data: jsonInput);
-      }
-    }
   }
 }
