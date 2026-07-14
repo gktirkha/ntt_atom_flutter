@@ -38,6 +38,8 @@ abstract class AtomSDK {
     )
     onClose,
     Future<bool> Function()? onUserExitRequest,
+    Widget Function(Future<String> paymentDetailsFuture)?
+    preProcessorDialogBuilder,
   }) async {
     _onClose = onClose;
     final navigator = navigatorObserver.navigator;
@@ -58,6 +60,7 @@ abstract class AtomSDK {
     navigator.push(
       AtomDialogRoute(
         pageBuilder: (context, animation, secondaryAnimation) =>
+            preProcessorDialogBuilder?.call(paymentDetailsCompleter.future) ??
             PreProcessorDialog(
               paymentDetailsCompleter: paymentDetailsCompleter,
             ),
