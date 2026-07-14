@@ -5,11 +5,11 @@ enum AtomCallbackMode {
   /// and the SDK does not forward or decrypt it.
   sendToServer,
 
-  /// The SDK decrypts the result and forwards the decrypted payload to
-  /// the configured forward URL.
-  forwardEncrypted,
-
   /// The SDK forwards the raw encrypted result to the configured forward
   /// URL without decrypting it first.
+  forwardEncrypted,
+
+  /// The SDK decrypts the result and forwards the decrypted payload to
+  /// the configured forward URL.
   forwardUnencrypted,
 }

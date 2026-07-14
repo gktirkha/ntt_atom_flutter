@@ -20,6 +20,7 @@ abstract class AtomSDK {
     Map<String, dynamic> data,
   )?
   _onClose;
+
   /// The [NavigatorObserver] that must be registered on the app's
   /// [Navigator] so the SDK can track and dismiss the routes it pushes.
   static NavigatorObserver get navigatorObserver => _internalNav;

@@ -72,14 +72,15 @@ sealed class AtomWebViewHelper {
         AtomSDK.close(transactionStatus: .unknown, data: {});
         break;
 
-      case .forwardUnencrypted:
-        final encryptedText =
+      case .forwardEncrypted:
+        final callBackResponse =
             await HtmlHelper.extractContentFromDefaultPGCallBack(
               webViewController,
             );
+        final encryptedText = _extractEncryptedText(callBackResponse);
         if (forwardUrl != null && encryptedText != null) {
           await forwardTxn(
-            content: encryptedText.toString(),
+            content: 'encData=$encryptedText',
             forwardUrl: forwardUrl,
           );
         }
@@ -93,11 +94,12 @@ sealed class AtomWebViewHelper {
         );
         break;
 
-      case .forwardEncrypted:
-        final encryptedText =
+      case .forwardUnencrypted:
+        final callBackResponse =
             await HtmlHelper.extractContentFromDefaultPGCallBack(
               webViewController,
             );
+        final encryptedText = _extractEncryptedText(callBackResponse);
         final decryptedTxn = await extractTransaction(
           encryptedText: encryptedText,
           key: options.responseDecryptionKey,
@@ -114,6 +116,15 @@ sealed class AtomWebViewHelper {
         );
         break;
     }
+  }
+
+  static String? _extractEncryptedText(String callBackResponse) {
+    final split = callBackResponse.trim().split('|');
+    final parsed = {for (int i = 0; i < split.length; i++) i: split[i]};
+    if (parsed[1] == null) return null;
+    final splitTwo = parsed[1]!.split('=');
+    if (splitTwo.length < 2) return null;
+    return splitTwo[1];
   }
 
   /// Decrypts [encryptedText] with [key] and parses it as JSON, returning
