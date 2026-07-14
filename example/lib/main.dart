@@ -164,6 +164,10 @@ class _HomeState extends State<Home> {
           'Transaction Status ${transactionStatus.name}\nTransaction Data $data',
           name: 'ATOM Payment Status',
         );
+        ScaffoldMessenger.of(context).clearSnackBars();
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(.new(content: Text(transactionStatus.name)));
       },
       onUserExitRequest: _onUserExitRequest,
     );
