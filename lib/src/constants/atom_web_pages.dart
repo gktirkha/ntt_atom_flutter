@@ -55,6 +55,9 @@ sealed class AtomWebPages {
         cdnScript.onload = function () {
             openPay(${jsonEncode(payDetails)});
         };
+        cdnScript.onerror = function () {
+            ${AtomConstants.errorChannelName}.postMessage('Failed to load Atom checkout script from $cdnUrl');
+        };
     </script>
 </body>
 
