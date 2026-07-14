@@ -152,11 +152,21 @@ class _AtomWebViewPageState extends State<AtomWebViewPage> {
   }
 
   Future<void> _forwardTxn(String content, String forwardUrl) async {
-    await Dio().post(
-      forwardUrl,
-      data: content,
-      options: .new(contentType: Headers.textPlainContentType),
-    );
+    final Dio dio = .new();
+    try {
+      await dio.post(
+        forwardUrl,
+        data: content,
+        options: .new(contentType: Headers.textPlainContentType),
+      );
+    } catch (e) {
+      log(
+        name: AtomConstants.logName,
+        'Transaction token request threw an exception: $e',
+      );
+    } finally {
+      dio.close();
+    }
   }
 
   Future<void> _validateAndCloseSDK(Map<String, dynamic>? jsonInput) async {

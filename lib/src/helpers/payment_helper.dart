@@ -89,6 +89,8 @@ sealed class PaymentHelper {
         'Transaction token request threw an exception: $e',
       );
       return null;
+    } finally {
+      dio.close();
     }
   }
 
