@@ -78,12 +78,9 @@ class _AtomWebViewPageState extends State<AtomWebViewPage> {
   }
 
   void _onJsError(JavaScriptMessage message) {
-    log(
-      'openPay threw: ${message.message}',
-      name: AtomConstants.logName,
-    );
+    log('openPay threw: ${message.message}', name: AtomConstants.logName);
     AtomSDK.close(
-      transactionStatus: .unknown,
+      transactionStatus: .failed,
       data: {'message': message.message},
     );
   }
