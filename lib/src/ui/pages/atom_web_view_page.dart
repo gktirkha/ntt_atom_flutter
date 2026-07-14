@@ -3,12 +3,14 @@ import 'dart:developer';
 
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 
 import '../../../ntt_atom_flutter.dart';
 import '../../constants/atom_constants.dart';
 import '../../constants/atom_pg_status_codes.dart';
 import '../../constants/atom_web_page.dart';
+import '../../constants/enums/atom_upi_app.dart';
 import '../../helpers/a_e_s_helper.dart';
 import '../../helpers/html_helper.dart';
 import '../../helpers/signature_helper.dart';
@@ -68,6 +70,7 @@ class _AtomWebViewPageState extends State<AtomWebViewPage> {
             widget.forwardUrl,
           );
         },
+        onNavigationRequest: _onNavigationRequest,
       ),
     );
 
@@ -86,6 +89,34 @@ class _AtomWebViewPageState extends State<AtomWebViewPage> {
       transactionStatus: .failed,
       data: {'message': message.message},
     );
+  }
+
+  Future<NavigationDecision> _onNavigationRequest(
+    NavigationRequest request,
+  ) async {
+    final uri = Uri.tryParse(request.url);
+    final AtomUpiApp? upiApp = uri == null ? null : .fromScheme(uri.scheme);
+    if (uri == null || upiApp == null) {
+      return .navigate;
+    }
+
+    try {
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    } catch (e) {
+      log('Unable to launch UPI app URL: $e', name: AtomConstants.logName);
+      if (mounted) {
+        ScaffoldMessenger.of(context).clearSnackBars();
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'Unable To Start ${upiApp.appName} Transaction, '
+              'Please Try other Payment Method',
+            ),
+          ),
+        );
+      }
+    }
+    return .prevent;
   }
 
   Future<void> _onPageFinished(String url) async {
