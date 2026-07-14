@@ -42,6 +42,10 @@ class _AtomWebViewPageState extends State<AtomWebViewPage> {
   late final WebViewController webViewController = WebViewController()
     ..setJavaScriptMode(.unrestricted)
     ..setNavigationDelegate(NavigationDelegate(onPageFinished: _onPageFinished))
+    ..addJavaScriptChannel(
+      AtomConstants.errorChannelName,
+      onMessageReceived: _onJsError,
+    )
     ..loadHtmlString(initFile)
     ..setOnConsoleMessage((message) {
       log(message.message, name: AtomConstants.logName);
@@ -70,6 +74,17 @@ class _AtomWebViewPageState extends State<AtomWebViewPage> {
     assert(
       widget.options.returnUrlConfig != null,
       'AtomPaymentOptions.returnUrlConfig must not be null.',
+    );
+  }
+
+  void _onJsError(JavaScriptMessage message) {
+    log(
+      'openPay threw: ${message.message}',
+      name: AtomConstants.logName,
+    );
+    AtomSDK.close(
+      transactionStatus: .unknown,
+      data: {'message': message.message},
     );
   }
 

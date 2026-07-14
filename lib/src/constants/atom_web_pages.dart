@@ -1,5 +1,7 @@
 import 'dart:convert';
 
+import 'atom_constants.dart';
+
 sealed class AtomWebPages {
   static String prod(String payDetails) =>
       '''
@@ -22,17 +24,21 @@ sealed class AtomWebPages {
     <p style="display: none;">AIPAYLocalFile</p>
     <script>
         function openPay(payDetails) {
-            let convertedJson = JSON.parse(payDetails);
-            const options = {
-                "atomTokenId": convertedJson.atomTokenId,
-                "merchId": convertedJson.merchId,
-                "custEmail": convertedJson.emailId,
-                "custMobile": convertedJson.mobileNumber,
-                "returnUrl": convertedJson.returnUrl,
-                "userAgent": "mobile_webView"
+            try {
+                let convertedJson = JSON.parse(payDetails);
+                const options = {
+                    "atomTokenId": convertedJson.atomTokenId,
+                    "merchId": convertedJson.merchId,
+                    "custEmail": convertedJson.emailId,
+                    "custMobile": convertedJson.mobileNumber,
+                    "returnUrl": convertedJson.returnUrl,
+                    "userAgent": "mobile_webView"
+                }
+                console.log("openPay options = ", JSON.stringify(options));
+                let atom = new AtomPaynetz(options, 'uat');
+            } catch (e) {
+                ${AtomConstants.errorChannelName}.postMessage(e && e.message ? e.message : String(e));
             }
-            console.log("openPay options = ", JSON.stringify(options));
-            let atom = new AtomPaynetz(options, 'uat');
         }
         cdnScript.onload = function () {
             openPay(${jsonEncode(payDetails)});
@@ -64,17 +70,21 @@ sealed class AtomWebPages {
     <p style="display: none;">AIPAYLocalFile</p>
     <script>
         function openPay(payDetails) {
-            let convertedJson = JSON.parse(payDetails);
-            const options = {
-                "atomTokenId": convertedJson.atomTokenId,
-                "merchId": convertedJson.merchId,
-                "custEmail": convertedJson.emailId,
-                "custMobile": convertedJson.mobileNumber,
-                "returnUrl": convertedJson.returnUrl,
-                "userAgent": "mobile_webView"
+            try {
+                let convertedJson = JSON.parse(payDetails);
+                const options = {
+                    "atomTokenId": convertedJson.atomTokenId,
+                    "merchId": convertedJson.merchId,
+                    "custEmail": convertedJson.emailId,
+                    "custMobile": convertedJson.mobileNumber,
+                    "returnUrl": convertedJson.returnUrl,
+                    "userAgent": "mobile_webView"
+                }
+                console.log("openPay options = ", JSON.stringify(options));
+                let atom = new AtomPaynetz(options, 'uat');
+            } catch (e) {
+                ${AtomConstants.errorChannelName}.postMessage(e && e.message ? e.message : String(e));
             }
-            console.log("openPay options = ", JSON.stringify(options));
-            let atom = new AtomPaynetz(options, 'uat');
         }
         cdnScript.onload = function () {
             openPay(${jsonEncode(payDetails)});

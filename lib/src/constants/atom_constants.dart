@@ -6,4 +6,6 @@ sealed class AtomConstants {
   static const String liveUrl = 'https://caller.atomtech.in/ots/aipay/auth';
 
   static const String logName = 'Atom SDK';
+
+  static const String errorChannelName = 'AtomErrorChannel';
 }
