@@ -90,8 +90,8 @@ class _AtomWebViewPageState extends State<AtomWebViewPage> {
                       document.getElementsByTagName('head')[0].appendChild(meta);
           ''');
     await AtomWebViewHelper.resolveForwarding(
-      webViewController: webViewController,
       url: url,
+      webViewController: webViewController,
       returnUrlConfig: widget.options.returnUrlConfig!,
       forwardUrl: widget.forwardUrl,
       options: widget.options,
