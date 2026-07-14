@@ -183,47 +183,6 @@ class _HomeState extends State<Home> {
                     _textField(_loginController, 'Login'),
                     _textField(_passwordController, 'Password'),
                     _textField(_prodidController, 'Product ID'),
-                    const SizedBox(height: 16),
-                    TextField(
-                      controller: _returnUrlController,
-                      keyboardType: TextInputType.url,
-                      decoration: const InputDecoration(
-                        labelText: 'Return URL (optional)',
-                        hintText: 'https://your-server.com/callback',
-                        border: OutlineInputBorder(),
-                      ),
-                      onChanged: (_) => setState(() {}),
-                    ),
-                    if (hasReturnUrl) ...[
-                      const SizedBox(height: 16),
-                      DropdownButtonFormField<AtomCallbackMode>(
-                        initialValue: _selectedMode,
-                        decoration: const InputDecoration(
-                          labelText: 'Return URL Mode',
-                          border: OutlineInputBorder(),
-                        ),
-                        items: const [
-                          DropdownMenuItem(
-                            value: .sendToServer,
-                            child: Text('Send to Server'),
-                          ),
-                          DropdownMenuItem(
-                            value: .forwardEncrypted,
-                            child: Text('Forward Encrypted'),
-                          ),
-                          DropdownMenuItem(
-                            value: .forwardUnencrypted,
-                            child: Text('Forward Unencrypted'),
-                          ),
-                        ],
-                        onChanged: (value) {
-                          if (value != null) {
-                            setState(() => _selectedMode = value);
-                          }
-                        },
-                      ),
-                    ],
-                    const SizedBox(height: 16),
                     _textField(_requestHashKeyController, 'Request Hash Key'),
                     _textField(_responseHashKeyController, 'Response Hash Key'),
                     _textField(
@@ -281,6 +240,46 @@ class _HomeState extends State<Home> {
                         if (value != null) setState(() => _selectedEnv = value);
                       },
                     ),
+                    const SizedBox(height: 16),
+                    TextField(
+                      controller: _returnUrlController,
+                      keyboardType: TextInputType.url,
+                      decoration: const InputDecoration(
+                        labelText: 'Return URL (optional)',
+                        hintText: 'https://your-server.com/callback',
+                        border: OutlineInputBorder(),
+                      ),
+                      onChanged: (_) => setState(() {}),
+                    ),
+                    if (hasReturnUrl) ...[
+                      const SizedBox(height: 16),
+                      DropdownButtonFormField<AtomCallbackMode>(
+                        initialValue: _selectedMode,
+                        decoration: const InputDecoration(
+                          labelText: 'Return URL Mode',
+                          border: OutlineInputBorder(),
+                        ),
+                        items: const [
+                          DropdownMenuItem(
+                            value: .sendToServer,
+                            child: Text('Send to Server'),
+                          ),
+                          DropdownMenuItem(
+                            value: .forwardEncrypted,
+                            child: Text('Forward Encrypted'),
+                          ),
+                          DropdownMenuItem(
+                            value: .forwardUnencrypted,
+                            child: Text('Forward Unencrypted'),
+                          ),
+                        ],
+                        onChanged: (value) {
+                          if (value != null) {
+                            setState(() => _selectedMode = value);
+                          }
+                        },
+                      ),
+                    ],
                   ],
                 ),
               ),
