@@ -189,7 +189,7 @@ class _AtomWebViewPageState extends State<AtomWebViewPage> {
       );
       return;
     }
-    bool isSignatureValid = SignatureHelper.validateSignature(
+    bool isSignatureValid = await SignatureHelper.validateSignature(
       jsonInput,
       widget.options.responseHashKey,
     );

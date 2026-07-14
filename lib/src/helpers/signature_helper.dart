@@ -1,6 +1,6 @@
 import 'dart:convert';
 
-import 'package:crypto/crypto.dart';
+import 'package:cryptography/cryptography.dart';
 
 sealed class SignatureHelper {
   static String getRequestJsonData(Map<String, dynamic> data) {
@@ -42,21 +42,18 @@ sealed class SignatureHelper {
     return json.encode(payload);
   }
 
-  static String createSignature(Map<String, dynamic> data) {
+  static Future<String> createSignature(Map<String, dynamic> data) async {
     final signatureString =
         '${data['login']}${data['password']}${data['txnid']}'
         'RD${data['amount']}${data['txncurr']}1';
 
-    final signatureBytes = utf8.encode(signatureString);
-    final hmacKey = utf8.encode(data['requestHashKey']);
-
-    final hmac = Hmac(sha512, hmacKey);
-    final hmacDigest = hmac.convert(signatureBytes);
-
-    return hmacDigest.toString();
+    return _hmacSha512Hex(signatureString, data['requestHashKey'] as String);
   }
 
-  static bool validateSignature(Map<String, dynamic> data, String resHashKey) {
+  static Future<bool> validateSignature(
+    Map<String, dynamic> data,
+    String resHashKey,
+  ) async {
     final signatureString =
         '${data['payInstrument']['merchDetails']['merchId']}'
         '${data['payInstrument']['payDetails']['atomTxnId']}'
@@ -66,15 +63,19 @@ sealed class SignatureHelper {
         '${data['payInstrument']['payModeSpecificData']['subChannel'][0]}'
         '${data['payInstrument']['payModeSpecificData']['bankDetails']['bankTxnId']}';
 
-    final signatureBytes = utf8.encode(signatureString);
-    final hmacKey = utf8.encode(resHashKey);
-
-    final hmac = Hmac(sha512, hmacKey);
-    final hmacDigest = hmac.convert(signatureBytes);
-
-    final genSig = hmacDigest.toString();
+    final genSig = await _hmacSha512Hex(signatureString, resHashKey);
 
     return data['payInstrument']['payDetails']['signature'] == genSig;
+  }
+
+  static Future<String> _hmacSha512Hex(String message, String key) async {
+    final mac = await Hmac.sha512().calculateMac(
+      utf8.encode(message),
+      secretKey: SecretKey(utf8.encode(key)),
+    );
+    return mac.bytes
+        .map((byte) => byte.toRadixString(16).padLeft(2, '0'))
+        .join();
   }
 
   static String _getFormattedDateTime() {
