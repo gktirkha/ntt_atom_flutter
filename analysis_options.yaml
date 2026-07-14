@@ -9,3 +9,4 @@ linter:
     - require_trailing_commas
     - sort_pub_dependencies
     - prefer_single_quotes
+    - public_member_api_docs
