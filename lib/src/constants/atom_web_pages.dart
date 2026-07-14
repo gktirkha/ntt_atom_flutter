@@ -47,7 +47,7 @@ sealed class AtomWebPages {
                     "userAgent": "mobile_webView"
                 }
                 console.log("openPay options = ", JSON.stringify(options));
-                let atom = new AtomPaynetz(options, '$paynetzMode');
+                new AtomPaynetz(options, '$paynetzMode');
             } catch (e) {
                 ${AtomConstants.errorChannelName}.postMessage(e && e.message ? e.message : String(e));
             }
