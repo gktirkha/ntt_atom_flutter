@@ -8,7 +8,7 @@ import 'package:webview_flutter/webview_flutter.dart';
 import '../../../ntt_atom_flutter.dart';
 import '../../constants/atom_constants.dart';
 import '../../constants/atom_pg_status_codes.dart';
-import '../../constants/atom_web_pages.dart';
+import '../../constants/atom_web_page.dart';
 import '../../helpers/a_e_s_helper.dart';
 import '../../helpers/html_helper.dart';
 import '../../helpers/signature_helper.dart';
@@ -30,7 +30,7 @@ class AtomWebViewPage extends StatefulWidget {
 }
 
 class _AtomWebViewPageState extends State<AtomWebViewPage> {
-  late final String initFile = AtomWebPages.page(
+  late final String initFile = AtomWebPage.page(
     widget.options.mode,
     widget.payDetails,
   );
@@ -53,6 +53,7 @@ class _AtomWebViewPageState extends State<AtomWebViewPage> {
     ..setNavigationDelegate(
       .new(
         onPageFinished: (url) async {
+          log('Page Loaded: $url', name: AtomConstants.logName);
           await webViewController.runJavaScript('''
           var meta = document.createElement('meta');
                       meta.name = 'viewport';

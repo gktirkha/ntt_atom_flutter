@@ -3,7 +3,7 @@ import 'dart:convert';
 import 'atom_constants.dart';
 import 'enums/atom_env.dart';
 
-sealed class AtomWebPages {
+sealed class AtomWebPage {
   static String page(AtomEnv mode, String payDetails) {
     final cdnUrl = switch (mode) {
       AtomEnv.live =>
