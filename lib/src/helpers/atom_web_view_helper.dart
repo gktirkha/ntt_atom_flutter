@@ -13,7 +13,11 @@ import 'a_e_s_helper.dart';
 import 'html_helper.dart';
 import 'signature_helper.dart';
 
+/// WebView orchestration helpers for the Atom checkout flow: handling JS
+/// errors, resolving UPI intents, and processing the gateway's return URL.
 sealed class AtomWebViewHelper {
+  /// Logs a JavaScript error reported by the checkout page and closes the
+  /// SDK with [AtomTransactionStatus.failed].
   static void handleJsError(JavaScriptMessage message) {
     log('openPay threw: ${message.message}', name: AtomConstants.logName);
     AtomSDK.close(
@@ -22,6 +26,11 @@ sealed class AtomWebViewHelper {
     );
   }
 
+  /// Intercepts navigation to a UPI app deep link, launching the matching
+  /// app or calling [onLaunchFailure] if the app cannot be opened.
+  ///
+  /// Returns [NavigationDecision.navigate] for non-UPI URLs and
+  /// [NavigationDecision.prevent] once a UPI URL has been handled.
   static Future<NavigationDecision> resolveNavigationRequest(
     NavigationRequest request, {
     required void Function(AtomUpiApp upiApp) onLaunchFailure,
@@ -41,10 +50,15 @@ sealed class AtomWebViewHelper {
     return .prevent;
   }
 
+  /// Returns whether [l1] and [l2] refer to the same URL, allowing either
+  /// one to be a prefix of the other.
   static bool areUrlsMatching(String l1, String l2) {
     return l1.contains(l2) || l2.contains(l1);
   }
 
+  /// Handles the WebView reaching the configured return URL: decrypts and/or
+  /// forwards the transaction payload according to [returnUrlConfig]'s mode,
+  /// then closes the SDK with the resulting status.
   static Future<void> resolveForwarding({
     required WebViewController webViewController,
     required String url,
@@ -102,6 +116,8 @@ sealed class AtomWebViewHelper {
     }
   }
 
+  /// Decrypts [encryptedText] with [key] and parses it as JSON, returning
+  /// `null` if [encryptedText] is `null` or decryption/parsing fails.
   static Future<Map<String, dynamic>?> extractTransaction({
     required String? encryptedText,
     required String key,
@@ -122,6 +138,7 @@ sealed class AtomWebViewHelper {
     }
   }
 
+  /// Posts [content] as plain text to [forwardUrl].
   static Future<void> forwardTxn({
     required String content,
     required String forwardUrl,
@@ -143,6 +160,8 @@ sealed class AtomWebViewHelper {
     }
   }
 
+  /// Validates the signature of [jsonInput] against [responseHashKey] and
+  /// closes the SDK with the corresponding [AtomTransactionStatus].
   static Future<void> validateAndCloseSDK({
     required Map<String, dynamic>? jsonInput,
     required String responseHashKey,

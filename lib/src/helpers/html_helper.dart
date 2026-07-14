@@ -2,7 +2,11 @@ import 'dart:convert';
 
 import 'package:webview_flutter/webview_flutter.dart';
 
+/// Helpers for scraping content out of the payment gateway's WebView pages.
 sealed class HtmlHelper {
+  /// Extracts the encrypted transaction text embedded in the default
+  /// payment gateway callback page's `<h5>` element, or `null` if it
+  /// cannot be found.
   static Future<String?> extractContentFromDefaultPGCallBack(
     WebViewController webViewController,
   ) async {
@@ -19,6 +23,8 @@ sealed class HtmlHelper {
     return extractedEncryptedText;
   }
 
+  /// Returns the current page's body content as JSON if it is valid JSON,
+  /// otherwise returns the page's full HTML.
   static Future<String> getHTMLContent(
     WebViewController webViewController,
   ) async {

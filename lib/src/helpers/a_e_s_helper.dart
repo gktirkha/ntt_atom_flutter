@@ -6,7 +6,11 @@ import 'package:encrypt/encrypt.dart';
 
 part '../constants/a_e_s_constants.dart';
 
+/// AES-CBC encryption and decryption utilities used to secure payloads
+/// exchanged with the Atom payment gateway.
 sealed class AESHelper {
+  /// Encrypts [plainText] using a key derived from [key] and returns the
+  /// result as an uppercase hex string.
   static Future<String> encrypt({
     required String plainText,
     required String key,
@@ -38,6 +42,8 @@ sealed class AESHelper {
     return _byteToHex(encryptedBytes);
   }
 
+  /// Decrypts a hex-encoded [encryptedText] using a key derived from [key]
+  /// and returns the resulting plain text.
   static Future<String> decrypt({
     required String encryptedText,
     required String key,

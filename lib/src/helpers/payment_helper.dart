@@ -10,7 +10,14 @@ import '../models/atom_payment_options/atom_payment_options.dart';
 import 'a_e_s_helper.dart';
 import 'signature_helper.dart';
 
+/// Drives the request/response flow with the Atom payment gateway to obtain
+/// a transaction token and the details needed to open the checkout page.
 sealed class PaymentHelper {
+  /// Requests and validates a transaction token from the payment gateway
+  /// using [options], returning the JSON-encoded payment details needed to
+  /// open the checkout page.
+  ///
+  /// Throws an [AtomException] if the token request or validation fails.
   static Future<String> startPayment(AtomPaymentOptions options) async {
     final plainText = SignatureHelper.getRequestJsonData(options.toJson());
     final key = options.requestEncryptionKey;

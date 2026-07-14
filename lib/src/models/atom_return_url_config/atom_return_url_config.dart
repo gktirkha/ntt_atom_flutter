@@ -6,6 +6,8 @@ import '../../constants/enums/atom_callback_mode.dart';
 part 'atom_return_url_config.freezed.dart';
 part 'atom_return_url_config.g.dart';
 
+/// Configures how the SDK detects and handles the payment gateway's
+/// redirect back to the merchant application.
 @freezed
 sealed class AtomReturnUrlConfig with _$AtomReturnUrlConfig {
   const factory AtomReturnUrlConfig({

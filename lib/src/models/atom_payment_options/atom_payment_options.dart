@@ -6,6 +6,8 @@ import '../atom_return_url_config/atom_return_url_config.dart';
 part 'atom_payment_options.freezed.dart';
 part 'atom_payment_options.g.dart';
 
+/// Configuration and merchant/customer details required to start a
+/// payment through the Atom SDK.
 @freezed
 sealed class AtomPaymentOptions with _$AtomPaymentOptions {
   const factory AtomPaymentOptions({

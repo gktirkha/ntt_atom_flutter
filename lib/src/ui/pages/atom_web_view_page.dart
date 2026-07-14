@@ -10,7 +10,10 @@ import '../../constants/atom_web_page.dart';
 import '../../constants/enums/atom_upi_app.dart';
 import '../../helpers/atom_web_view_helper.dart';
 
+/// The WebView page that hosts the Atom checkout script and handles the
+/// payment gateway's redirect back to the merchant's return URL.
 class AtomWebViewPage extends StatefulWidget {
+  /// Creates the checkout WebView page for a transaction.
   const AtomWebViewPage({
     super.key,
     required this.payDetails,
@@ -19,9 +22,18 @@ class AtomWebViewPage extends StatefulWidget {
     this.onUserExitRequest,
   });
 
+  /// The JSON-encoded payment details produced by `PaymentHelper.startPayment`.
   final String payDetails;
+
+  /// The payment options the transaction was started with.
   final AtomPaymentOptions options;
+
+  /// The URL the decrypted or raw transaction result should be forwarded
+  /// to, if any.
   final String? forwardUrl;
+
+  /// Called when the user attempts to leave the checkout page; may return
+  /// `false` to block the exit.
   final Future<bool> Function()? onUserExitRequest;
 
   @override

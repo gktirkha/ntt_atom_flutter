@@ -2,6 +2,10 @@ import 'package:flutter/material.dart';
 
 import '../../sdk/atom_s_d_k.dart';
 
+/// Shows a dialog asking the user to confirm cancelling the payment.
+///
+/// If confirmed, sets [canPop] to `true` and closes the SDK with
+/// [AtomTransactionStatus.cancelled].
 Future<Object?> showCloseConfirmationDialog(
   BuildContext context,
   ValueNotifier<bool> canPop,

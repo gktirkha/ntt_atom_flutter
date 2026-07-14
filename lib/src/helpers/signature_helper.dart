@@ -2,7 +2,11 @@ import 'dart:convert';
 
 import 'package:cryptography/cryptography.dart';
 
+/// Builds and validates the signed request/response payloads exchanged
+/// with the Atom payment gateway.
 sealed class SignatureHelper {
+  /// Builds the JSON-encoded `payInstrument` request payload for [data],
+  /// as expected by the payment gateway.
   static String getRequestJsonData(Map<String, dynamic> data) {
     String datetime = _getFormattedDateTime();
 
@@ -42,6 +46,8 @@ sealed class SignatureHelper {
     return json.encode(payload);
   }
 
+  /// Computes the HMAC-SHA512 request signature for [data] using its
+  /// `requestHashKey`.
   static Future<String> createSignature(Map<String, dynamic> data) async {
     final signatureString =
         '${data['login']}${data['password']}${data['txnid']}'
@@ -50,6 +56,8 @@ sealed class SignatureHelper {
     return _hmacSha512Hex(signatureString, data['requestHashKey'] as String);
   }
 
+  /// Recomputes the response signature from [data] using [resHashKey] and
+  /// returns whether it matches the signature contained in [data].
   static Future<bool> validateSignature(
     Map<String, dynamic> data,
     String resHashKey,

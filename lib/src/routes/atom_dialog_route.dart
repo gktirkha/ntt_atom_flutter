@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 
+/// A [PopupRoute] used by the Atom SDK to present dialogs (such as the
+/// pre-processor and close-confirmation dialogs) above the current page.
 class AtomDialogRoute<T> extends PopupRoute<T> {
+  /// Creates a dialog route that builds its content with [_pageBuilder].
   AtomDialogRoute({
     required this._pageBuilder,
     this._barrierDismissible = false,
@@ -34,6 +37,8 @@ class AtomDialogRoute<T> extends PopupRoute<T> {
 
   final RouteTransitionsBuilder? _transitionBuilder;
 
+  /// The point used to select which screen the dialog appears on in a
+  /// multi-display layout.
   final Offset? anchorPoint;
 
   @override

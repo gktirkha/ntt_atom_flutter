@@ -3,7 +3,10 @@ import 'dart:convert';
 import 'atom_constants.dart';
 import 'enums/atom_env.dart';
 
+/// Builds the local HTML page used to bootstrap the Atom checkout script.
 sealed class AtomWebPage {
+  /// Returns the HTML document that loads the Atom checkout CDN script for
+  /// [mode] and invokes it with the given [payDetails].
   static String page(AtomEnv mode, String payDetails) {
     final cdnUrl = switch (mode) {
       AtomEnv.live =>

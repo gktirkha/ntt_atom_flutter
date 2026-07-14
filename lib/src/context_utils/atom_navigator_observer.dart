@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import '../routes/atom_dialog_route.dart';
 import '../routes/atom_page_route.dart';
 
+/// A [NavigatorObserver] that tracks the routes pushed by the Atom SDK so
+/// they can be dismissed together via [closeAtomSDK].
 class AtomNavigatorObserver extends NavigatorObserver {
   static final List<Route<dynamic>> _routeStack = [];
 
@@ -33,6 +35,7 @@ class AtomNavigatorObserver extends NavigatorObserver {
     }
   }
 
+  /// Removes all routes pushed by the Atom SDK from the navigator.
   void closeAtomSDK() {
     _routeStack.removeWhere((route) {
       if (route is AtomPageRoute || route is AtomDialogRoute) {
