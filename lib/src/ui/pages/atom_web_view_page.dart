@@ -7,6 +7,7 @@ import 'package:webview_flutter/webview_flutter.dart';
 import '../../../ntt_atom_flutter.dart';
 import '../../constants/atom_constants.dart';
 import '../../constants/atom_web_page.dart';
+import '../../constants/enums/atom_upi_app.dart';
 import '../../helpers/atom_web_view_helper.dart';
 
 class AtomWebViewPage extends StatefulWidget {
@@ -39,66 +40,17 @@ class _AtomWebViewPageState extends State<AtomWebViewPage> {
 
   late final WebViewController webViewController = WebViewController()
     ..setJavaScriptMode(.unrestricted)
-    ..setNavigationDelegate(
-      NavigationDelegate(
-        onPageFinished: (url) async {
-          if (!url.startsWith(returnUrl)) return;
-
-          final result = await webViewController.runJavaScriptReturningResult(
-            'document.documentElement.outerHTML',
-          );
-          final html = result is String
-              ? jsonDecode(result) as String
-              : '$result';
-          log(html, name: AtomConstants.logName);
-        },
-      ),
-    )
+    ..setNavigationDelegate(NavigationDelegate(onPageFinished: _onPageFinished))
     ..addJavaScriptChannel(
       AtomConstants.errorChannelName,
-      onMessageReceived: (message) {
-        AtomWebViewHelper.handleJsError(message);
-      },
+      onMessageReceived: _onJsError,
     )
     ..loadHtmlString(initFile)
-    ..setOnConsoleMessage((message) {
-      log(message.message, name: AtomConstants.logName);
-    })
+    ..setOnConsoleMessage(_onConsoleMessage)
     ..setNavigationDelegate(
       .new(
-        onPageFinished: (url) async {
-          log('Page Loaded: $url', name: AtomConstants.logName);
-          await webViewController.runJavaScript('''
-          var meta = document.createElement('meta');
-                      meta.name = 'viewport';
-                      meta.content = 'width=device-width, initial-scale=1.0';
-                      document.getElementsByTagName('head')[0].appendChild(meta);
-          ''');
-          await AtomWebViewHelper.resolveForwarding(
-            webViewController: webViewController,
-            url: url,
-            returnUrlConfig: widget.options.returnUrlConfig!,
-            forwardUrl: widget.forwardUrl,
-            options: widget.options,
-          );
-        },
-        onNavigationRequest: (request) {
-          return AtomWebViewHelper.resolveNavigationRequest(
-            request,
-            onLaunchFailure: (upiApp) {
-              if (!mounted) return;
-              ScaffoldMessenger.of(context).clearSnackBars();
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text(
-                    'Unable To Start ${upiApp.appName} Transaction, '
-                    'Please Try other Payment Method',
-                  ),
-                ),
-              );
-            },
-          );
-        },
+        onPageFinished: _onReturnUrlPageFinished,
+        onNavigationRequest: _onNavigationRequest,
       ),
     );
 
@@ -108,6 +60,61 @@ class _AtomWebViewPageState extends State<AtomWebViewPage> {
     assert(
       widget.options.returnUrlConfig != null,
       'AtomPaymentOptions.returnUrlConfig must not be null.',
+    );
+  }
+
+  Future<void> _onPageFinished(String url) async {
+    if (!url.startsWith(returnUrl)) return;
+
+    final result = await webViewController.runJavaScriptReturningResult(
+      'document.documentElement.outerHTML',
+    );
+    final html = result is String ? jsonDecode(result) as String : '$result';
+    log(html, name: AtomConstants.logName);
+  }
+
+  void _onJsError(JavaScriptMessage message) {
+    AtomWebViewHelper.handleJsError(message);
+  }
+
+  void _onConsoleMessage(JavaScriptConsoleMessage message) {
+    log(message.message, name: AtomConstants.logName);
+  }
+
+  Future<void> _onReturnUrlPageFinished(String url) async {
+    log('Page Loaded: $url', name: AtomConstants.logName);
+    await webViewController.runJavaScript('''
+          var meta = document.createElement('meta');
+                      meta.name = 'viewport';
+                      meta.content = 'width=device-width, initial-scale=1.0';
+                      document.getElementsByTagName('head')[0].appendChild(meta);
+          ''');
+    await AtomWebViewHelper.resolveForwarding(
+      webViewController: webViewController,
+      url: url,
+      returnUrlConfig: widget.options.returnUrlConfig!,
+      forwardUrl: widget.forwardUrl,
+      options: widget.options,
+    );
+  }
+
+  Future<NavigationDecision> _onNavigationRequest(NavigationRequest request) {
+    return AtomWebViewHelper.resolveNavigationRequest(
+      request,
+      onLaunchFailure: _onUpiLaunchFailure,
+    );
+  }
+
+  void _onUpiLaunchFailure(AtomUpiApp upiApp) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).clearSnackBars();
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          'Unable To Start ${upiApp.appName} Transaction, '
+          'Please Try other Payment Method',
+        ),
+      ),
     );
   }
 

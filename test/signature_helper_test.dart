@@ -95,10 +95,7 @@ void main() {
         },
       };
 
-      final isValid = await SignatureHelper.validateSignature(
-        data,
-        'anyKey',
-      );
+      final isValid = await SignatureHelper.validateSignature(data, 'anyKey');
 
       expect(isValid, isFalse);
     });
