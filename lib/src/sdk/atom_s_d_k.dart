@@ -37,6 +37,7 @@ abstract class AtomSDK {
       Map<String, dynamic> data,
     )
     onClose,
+    Future<bool> Function()? onUserExitRequest,
   }) async {
     _onClose = onClose;
     final navigator = navigatorObserver.navigator;
@@ -87,6 +88,7 @@ abstract class AtomSDK {
           payDetails: paymentDetails,
           options: sdkOptions,
           forwardUrl: forwardUrl,
+          onUserExitRequest: onUserExitRequest,
         ),
       ),
     );

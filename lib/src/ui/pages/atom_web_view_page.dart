@@ -19,11 +19,13 @@ class AtomWebViewPage extends StatefulWidget {
     required this.payDetails,
     required this.options,
     this.forwardUrl,
+    this.onUserExitRequest,
   });
 
   final String payDetails;
   final AtomPaymentOptions options;
   final String? forwardUrl;
+  final Future<bool> Function()? onUserExitRequest;
 
   @override
   State<AtomWebViewPage> createState() => _AtomWebViewPageState();
@@ -98,8 +100,18 @@ class _AtomWebViewPageState extends State<AtomWebViewPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: SafeArea(child: WebViewWidget(controller: webViewController)),
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, result) async {
+        if (didPop) return;
+        final shouldExit = await widget.onUserExitRequest?.call() ?? true;
+        if (shouldExit) {
+          AtomSDK.close(transactionStatus: .cancelled, data: {});
+        }
+      },
+      child: Scaffold(
+        body: SafeArea(child: WebViewWidget(controller: webViewController)),
+      ),
     );
   }
 
