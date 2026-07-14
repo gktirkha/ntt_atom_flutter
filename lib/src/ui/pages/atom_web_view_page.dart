@@ -30,10 +30,10 @@ class AtomWebViewPage extends StatefulWidget {
 }
 
 class _AtomWebViewPageState extends State<AtomWebViewPage> {
-  late final String initFile = switch (widget.options.mode) {
-    AtomEnv.live => AtomWebPages.prod(widget.payDetails),
-    AtomEnv.uat => AtomWebPages.uat(widget.payDetails),
-  };
+  late final String initFile = AtomWebPages.page(
+    widget.options.mode,
+    widget.payDetails,
+  );
 
   late final String returnUrl =
       (jsonDecode(widget.payDetails) as Map<String, dynamic>)['returnUrl']
