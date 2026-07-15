@@ -15,4 +15,7 @@ sealed class AtomConstants {
 
   /// Name of the JavaScript channel used to report errors from the WebView.
   static const String errorChannelName = 'AtomErrorChannel';
+
+  /// User Agent For SDK
+  static const String userAgent = 'ntt_atom_flutter/v2';
 }

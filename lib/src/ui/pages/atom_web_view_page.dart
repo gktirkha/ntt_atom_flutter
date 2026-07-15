@@ -64,7 +64,8 @@ class _AtomWebViewPageState extends State<AtomWebViewPage> {
         onPageFinished: _onReturnUrlPageFinished,
         onNavigationRequest: _onNavigationRequest,
       ),
-    );
+    )
+    ..setUserAgent(AtomConstants.userAgent);
 
   @override
   void initState() {

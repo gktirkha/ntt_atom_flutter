@@ -1,3 +1,6 @@
+## 2.0.1
+- Added a `User-Agent` header (`AtomConstants.userAgent`) to all outgoing requests made via `DioBuilder`
+
 ## 2.0.0
 - **Breaking:** `AtomSDK` is now a fully static class; call `AtomSDK.checkOut(...)` directly instead of `AtomSDK().checkOut(...)`
 - **Breaking:** Renamed `AtomPaymentMode` to `AtomEnv` and `AtomReturnUrlMode` to `AtomCallbackMode`

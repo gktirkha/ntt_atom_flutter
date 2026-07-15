@@ -10,6 +10,7 @@ import '../constants/atom_constants.dart';
 import '../constants/atom_pg_status_codes.dart';
 import '../constants/enums/atom_upi_app.dart';
 import 'a_e_s_helper.dart';
+import 'dio_builder.dart';
 import 'html_helper.dart';
 import 'signature_helper.dart';
 
@@ -105,10 +106,7 @@ sealed class AtomWebViewHelper {
           key: options.responseDecryptionKey,
         );
         if (forwardUrl != null && decryptedTxn != null) {
-          await forwardTxn(
-            content: jsonEncode(decryptedTxn),
-            forwardUrl: forwardUrl,
-          );
+          await forwardTxn(content: decryptedTxn, forwardUrl: forwardUrl);
         }
         await validateAndCloseSDK(
           jsonInput: decryptedTxn,
@@ -151,15 +149,21 @@ sealed class AtomWebViewHelper {
 
   /// Posts [content] as plain text to [forwardUrl].
   static Future<void> forwardTxn({
-    required String content,
+    required dynamic content,
     required String forwardUrl,
   }) async {
-    final Dio dio = .new();
+    final Dio dio = DioBuilder.buildDio();
     try {
       await dio.post(
         forwardUrl,
-        data: content,
-        options: .new(contentType: Headers.textPlainContentType),
+        data: (content is Map<String, dynamic> || content is String)
+            ? content
+            : jsonEncode(content),
+        options: .new(
+          contentType: content is Map<String, dynamic>
+              ? Headers.jsonContentType
+              : Headers.textPlainContentType,
+        ),
       );
     } catch (e) {
       log(

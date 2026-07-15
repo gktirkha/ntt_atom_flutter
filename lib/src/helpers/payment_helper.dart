@@ -8,6 +8,7 @@ import '../constants/atom_pg_status_codes.dart';
 import '../exception/atom_exception.dart';
 import '../models/atom_payment_options/atom_payment_options.dart';
 import 'a_e_s_helper.dart';
+import 'dio_builder.dart';
 import 'signature_helper.dart';
 
 /// Drives the request/response flow with the Atom payment gateway to obtain
@@ -70,7 +71,7 @@ sealed class PaymentHelper {
       .uat => AtomConstants.uatUrl,
     };
 
-    final Dio dio = .new();
+    final Dio dio = DioBuilder.buildDio();
     try {
       final Response response = await dio.post(
         url,
