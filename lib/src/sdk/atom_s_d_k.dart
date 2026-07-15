@@ -95,6 +95,7 @@ abstract class AtomSDK {
     final paymentDetails = await paymentDetailsCompleter.future.catchError((e) {
       if (e is AtomException) {
         log(e.toString(), name: AtomConstants.logName);
+        onClose(.unknown, {'message': e.message, 'code': e.code.name});
       }
       return '';
     });

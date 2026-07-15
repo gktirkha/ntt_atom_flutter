@@ -1,3 +1,6 @@
+## 2.0.3
+- Fixed `checkOut` swallowing `AtomException`s: `onClose` is now called with `AtomTransactionStatus.unknown` and the exception's `message`/`code` when starting the payment fails
+
 ## 2.0.2
 - added dispose method
 - Documented the SDK's `User-Agent` header in the README
