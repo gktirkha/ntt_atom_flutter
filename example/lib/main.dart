@@ -99,6 +99,7 @@ class _HomeState extends State<Home> {
     _udf5Controller.dispose();
     _txnidController.dispose();
     _returnUrlController.dispose();
+    AtomSDK.dispose();
     super.dispose();
   }
 

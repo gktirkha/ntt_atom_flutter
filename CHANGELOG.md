@@ -1,3 +1,7 @@
+## 2.0.2
+- added dispose method
+- Documented the SDK's `User-Agent` header in the README
+
 ## 2.0.1
 - Added a `User-Agent` header (`AtomConstants.userAgent`) to webview and api calls
 

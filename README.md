@@ -200,6 +200,10 @@ AtomSDK.checkOut(
 - Return `false` to keep the user on the payment screen.
 - If `onUserExitRequest` is omitted, exit is always allowed.
 
+## User-Agent
+
+All network requests made by the SDK (transaction token requests, callback forwarding, and the checkout WebView) send a `User-Agent` header identifying the SDK, e.g. `ntt_atom_flutter/v2`. This is not currently configurable.
+
 ## Android Configuration
 
 Add the `INTERNET` permission and a `<queries>` block to your `android/app/src/main/AndroidManifest.xml`. The `<queries>` block is required on Android 11+ (API 30+) for the OS to allow the SDK to launch UPI payment apps.

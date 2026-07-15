@@ -34,6 +34,7 @@ abstract class AtomSDK {
   }) {
     _internalNav.closeAtomSDK();
     _onClose?.call(transactionStatus, data);
+    dispose();
   }
 
   /// Starts a payment using [sdkOptions] and pushes the pre-processor and
@@ -135,5 +136,10 @@ abstract class AtomSDK {
         .forwardUnencrypted => AtomConstants.defaultReturnUrl,
       },
     );
+  }
+
+  /// Clears the `onClose` callback registered by [checkOut].
+  static void dispose() {
+    _onClose = null;
   }
 }
