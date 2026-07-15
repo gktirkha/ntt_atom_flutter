@@ -35,8 +35,7 @@ Example:
         body: Center(
           child: ElevatedButton(
             onPressed: () {
-              final instance = AtomSDK();
-              instance.checkOut(
+              AtomSDK.checkOut(
                 sdkOptions: AtomPaymentOptions(
                   login: '317157',
                   password: 'Test@123',
@@ -61,7 +60,7 @@ Example:
                   udf3: 'udf3',
                   udf4: 'udf4',
                   udf5: 'udf5',
-                  mode: AtomPaymentMode.uat,
+                  mode: AtomEnv.uat,
                   txnid: 'test240223',
                 ),
                 onClose: (transactionStatus, data) {
@@ -92,14 +91,9 @@ Example:
       )
     ```
 
-1. Initialize the object
-    ```dart
-    final instance = AtomSDK();
-    ```
-
 1. Check Out
     ```dart
-      instance.checkOut(
+      AtomSDK.checkOut(
               sdkOptions: AtomPaymentOptions(
                 login: '317157',
                 password: 'Test@123',
@@ -124,7 +118,7 @@ Example:
                 udf3: 'udf3',
                 udf4: 'udf4',
                 udf5: 'udf5',
-                mode: AtomPaymentMode.uat,
+                mode: AtomEnv.uat,
                 txnid: 'test240223',
               ),
               onClose: (transactionStatus, data) {
@@ -132,6 +126,14 @@ Example:
                   "Transaction Status ${transactionStatus.name.toString()}\nTransaction Data ${data.toString()}",
                   name: "ATOM Payment Status",
                 );
+              },
+              onUserExitRequest: () async {
+                // Optional. Called when the user tries to leave the payment
+                // screen (e.g. system back button/gesture). Return `true` to
+                // allow the exit (closes the SDK with AtomTransactionStatus.cancelled),
+                // or `false` to keep the user on the payment screen.
+                // Defaults to `true` (always allow exit) if omitted.
+                return true;
               },
             );
     ```
@@ -148,7 +150,7 @@ AtomPaymentOptions(
   ...
   returnUrlConfig: AtomReturnUrlConfig(
     returnUrl: 'https://your-server.com/payment/callback',
-    mode: AtomReturnUrlMode.forwardUnencrypted, // or forwardEncrypted / sendToServer
+    mode: AtomCallbackMode.forwardUnencrypted, // or forwardEncrypted / sendToServer
   ),
 )
 ```
@@ -162,6 +164,41 @@ AtomPaymentOptions(
 | `forwardUnencrypted` | SDK captures the response at its default URL, decrypts it, POSTs the **JSON** (`Content-Type: application/json`) to your URL, then parses the status for the app. | Yes |
 
 > **Note:** For `forwardEncrypted` and `forwardUnencrypted`, a POST failure to your server is silently ignored — the SDK status callback is always delivered.
+
+## Confirming User Exit
+
+Pass `onUserExitRequest` to `checkOut` to intercept the user attempting to leave the payment screen (system back button/gesture):
+
+```dart
+AtomSDK.checkOut(
+  sdkOptions: options,
+  onClose: (transactionStatus, data) { ... },
+  onUserExitRequest: () async {
+    return await showDialog<bool>(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: const Text('Cancel Payment?'),
+            content: const Text('Are you sure you want to exit the payment?'),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(false),
+                child: const Text('No'),
+              ),
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(true),
+                child: const Text('Yes'),
+              ),
+            ],
+          ),
+        ) ??
+        false;
+  },
+);
+```
+
+- Return `true` to allow the exit — the SDK closes and calls `onClose` with `AtomTransactionStatus.cancelled`.
+- Return `false` to keep the user on the payment screen.
+- If `onUserExitRequest` is omitted, exit is always allowed.
 
 ## Android Configuration
 
